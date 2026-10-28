@@ -1,44 +1,27 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  ArrowRight,
-  BookOpen,
   Bookmark,
+  BookOpen,
   Calendar,
-  Clock,
-  Copy,
-  Download,
+  ChevronRight,
   FileText,
-  Flame,
   Search,
-  SlidersHorizontal,
   Trash2,
+  X,
 } from 'lucide-react';
+import { IslamicCornerMotif } from '../components/common/IslamicOrnaments';
 import { toast } from '../components/common/Toast';
 import { StorageService } from '../services/storageService';
-import { BookmarkItem, DailyTilawahLog, LastReadPosition } from '../types/quran';
+import { BookmarkItem } from '../types/quran';
 
 interface BookmarksPageProps {
   onNavigateToAyat: (surahNomor: number, ayatNomor: number) => void;
 }
 
 export const BookmarksPage: React.FC<BookmarksPageProps> = ({ onNavigateToAyat }) => {
-  const [activeTab, setActiveTab] = useState<'bookmarks' | 'notes' | 'history'>('bookmarks');
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(StorageService.getBookmarks());
-  const [notes, setNotes] = useState<Record<string, string>>(StorageService.getNotes());
-  const [historyLogs, setHistoryLogs] = useState<DailyTilawahLog[]>(StorageService.getTilawahLogs());
-  const lastRead: LastReadPosition | null = StorageService.getLastRead();
-
-  useEffect(() => {
-    const sync = () => {
-      setHistoryLogs(StorageService.getTilawahLogs());
-    };
-    window.addEventListener('quranme_tilawah_updated', sync);
-    return () => window.removeEventListener('quranme_tilawah_updated', sync);
-  }, []);
-
-  // Search & Sorting state
+  const [filterType, setFilterType] = useState<'all' | 'ayat' | 'surat' | 'catatan'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'surah'>('newest');
 
   const handleRemoveBookmark = (e: React.MouseEvent, b: BookmarkItem) => {
     e.stopPropagation();
@@ -48,19 +31,10 @@ export const BookmarksPage: React.FC<BookmarksPageProps> = ({ onNavigateToAyat }
     toast.show(`Bookmark QS. ${b.surahNamaLatin}:${b.ayatNomor} dihapus`, 'info');
   };
 
-  const handleRemoveNote = (e: React.MouseEvent, key: string) => {
-    e.stopPropagation();
-    const [surahStr, ayatStr] = key.split('-');
-    StorageService.saveNoteForAyat(Number(surahStr), Number(ayatStr), '');
-    const updated = StorageService.getNotes();
-    setNotes(updated);
-    toast.show('Catatan tadabbur dihapus', 'info');
-  };
-
-  // Filtered & sorted bookmarks
-  const processedBookmarks = useMemo(() => {
+  const filteredBookmarks = useMemo(() => {
     let result = [...bookmarks];
     const q = searchQuery.trim().toLowerCase();
+
     if (q) {
       result = result.filter(
         (b) =>
@@ -69,385 +43,175 @@ export const BookmarksPage: React.FC<BookmarksPageProps> = ({ onNavigateToAyat }
           b.ayatNomor.toString() === q
       );
     }
-    if (sortBy === 'newest') {
-      result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    } else if (sortBy === 'oldest') {
-      result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    } else if (sortBy === 'surah') {
-      result.sort((a, b) => {
-        if (a.surahNomor !== b.surahNomor) return a.surahNomor - b.surahNomor;
-        return a.ayatNomor - b.ayatNomor;
-      });
+
+    if (filterType === 'catatan') {
+      result = result.filter((b) => Boolean(b.note));
     }
+
     return result;
-  }, [bookmarks, searchQuery, sortBy]);
+  }, [bookmarks, searchQuery, filterType]);
 
-  // Filtered notes
-  const processedNotes = useMemo(() => {
-    const list = Object.entries(notes).map(([key, text]) => {
-      const [surahStr, ayatStr] = key.split('-');
-      return {
-        key,
-        surahNomor: Number(surahStr),
-        ayatNomor: Number(ayatStr),
-        text,
-      };
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
     });
-
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter(
-      (n) =>
-        n.text.toLowerCase().includes(q) ||
-        n.surahNomor.toString() === q ||
-        n.ayatNomor.toString() === q
-    );
-  }, [notes, searchQuery]);
-
-  const handleCopyAllBookmarks = async () => {
-    if (bookmarks.length === 0) return;
-    const text = bookmarks
-      .map(
-        (b, i) =>
-          `${i + 1}. QS. ${b.surahNamaLatin}:${b.ayatNomor}\n${b.teksArab}\n"${b.teksIndonesia}"`
-      )
-      .join('\n\n');
-
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.show('Seluruh daftar bookmark berhasil disalin');
-    } catch {
-      toast.show('Gagal menyalin bookmark', 'info');
-    }
   };
 
-  // Calculate total historical ayats read
-  const totalAyatsRead = useMemo(() => {
-    return historyLogs.reduce((acc, log) => acc + (log.ayatCount || 0), 0);
-  }, [historyLogs]);
-
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16 animate-in fade-in duration-200">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[var(--border-main)]">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-main)]">Koleksi & Riwayat</h1>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">
-            Daftar ayat yang Anda tandai, catatan tadabbur, dan rekam jejak tilawah
+    <div className="space-y-6 pb-20 animate-in fade-in duration-200">
+      {/* 1. Header with Islamic Motif (Matching Reference Screen 6) */}
+      <div className="relative overflow-hidden rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 shadow-xs flex items-center justify-between">
+        <div className="space-y-1 relative z-10">
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-2xl bg-[#DDF5E5] text-[#43B433] flex items-center justify-center">
+              <Bookmark className="w-5 h-5 fill-[#43B433]" />
+            </span>
+            <h1 className="text-2xl font-extrabold text-[var(--text-main)] tracking-tight">
+              Bookmark
+            </h1>
+          </div>
+          <p className="text-xs text-[var(--text-muted)] pl-13 font-medium">
+            Kumpulan ayat favorit dan penanda bacaan Anda
           </p>
         </div>
 
-        {/* Local Storage Indicator */}
-        <span className="text-[11px] text-[var(--text-muted)] bg-[var(--bg-card-subtle)] px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] self-start sm:self-auto font-medium">
-          Tersimpan aman di perangkat lokal
-        </span>
+        <div className="absolute right-0 top-0 text-[#43B433] pointer-events-none opacity-20">
+          <IslamicCornerMotif className="w-28 h-28 text-[#43B433]" opacity={1} />
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 p-1 bg-[var(--bg-card-subtle)] border border-[var(--border-subtle)] rounded-2xl">
-        <button
-          onClick={() => {
-            setActiveTab('bookmarks');
-            setSearchQuery('');
-          }}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all cursor-pointer active:scale-95 ${
-            activeTab === 'bookmarks'
-              ? 'bg-[#0EAAFC] text-white shadow-xs'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-          }`}
-        >
-          <Bookmark className="w-4 h-4" />
-          <span>Bookmark ({bookmarks.length})</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab('notes');
-            setSearchQuery('');
-          }}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all cursor-pointer active:scale-95 ${
-            activeTab === 'notes'
-              ? 'bg-[#43B433] text-white shadow-xs'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>Catatan ({Object.keys(notes).length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl transition-all cursor-pointer active:scale-95 ${
-            activeTab === 'history'
-              ? 'bg-[#0877B9] text-white shadow-xs'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          <span>Riwayat Tilawah</span>
-        </button>
-      </div>
-
-      {/* Search & Action Bar for Bookmarks and Notes */}
-      {(activeTab === 'bookmarks' || activeTab === 'notes') && (
-        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={
-                activeTab === 'bookmarks'
-                  ? 'Cari nama surat atau terjemahan bookmark...'
-                  : 'Cari dalam catatan tadabbur...'
-              }
-              className="w-full pl-9 pr-4 py-2 bg-[var(--bg-card)] border border-[var(--border-main)] rounded-xl text-xs text-[var(--text-main)] focus:outline-none focus:border-[#0EAAFC] focus:ring-1 focus:ring-[#0EAAFC]"
-            />
+      {/* 2. Search & Filter Bar */}
+      <div className="space-y-3">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+            <Search className="w-4 h-4 text-[#0EAAFC]" />
           </div>
-
-          {activeTab === 'bookmarks' && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-[var(--bg-card)] border border-[var(--border-main)] rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-muted)]">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-transparent border-none text-xs text-[var(--text-main)] focus:outline-none cursor-pointer"
-                >
-                  <option value="newest">Terbaru</option>
-                  <option value="oldest">Terlama</option>
-                  <option value="surah">Urutan Surat</option>
-                </select>
-              </div>
-
-              {bookmarks.length > 0 && (
-                <button
-                  onClick={handleCopyAllBookmarks}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--badge-blue-bg)] text-[#0877B9] hover:bg-[#0EAAFC] hover:text-white transition-all text-xs font-semibold cursor-pointer shrink-0 active:scale-95"
-                  title="Salin semua bookmark"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Salin Semua</span>
-                </button>
-              )}
-            </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari dalam bookmark..."
+            className="w-full pl-11 pr-10 py-3 rounded-full bg-[var(--bg-card)] border border-[var(--border-main)] text-sm text-[var(--text-main)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0EAAFC]/30 focus:border-[#0EAAFC] transition-all shadow-xs"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[var(--text-main)] cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
           )}
         </div>
-      )}
 
-      {/* Tab 1: Bookmarks */}
-      {activeTab === 'bookmarks' && (
+        {/* Filter Pills: Semua | Ayat | Surat | Catatan */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFilterType('all')}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              filterType === 'all'
+                ? 'bg-[#0EAAFC] text-white shadow-xs'
+                : 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-main)] hover:border-slate-300'
+            }`}
+          >
+            Semua ({bookmarks.length})
+          </button>
+          <button
+            onClick={() => setFilterType('ayat')}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              filterType === 'ayat'
+                ? 'bg-[#0EAAFC] text-white shadow-xs'
+                : 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-main)] hover:border-slate-300'
+            }`}
+          >
+            Ayat
+          </button>
+          <button
+            onClick={() => setFilterType('surat')}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              filterType === 'surat'
+                ? 'bg-[#0EAAFC] text-white shadow-xs'
+                : 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-main)] hover:border-slate-300'
+            }`}
+          >
+            Surat
+          </button>
+          <button
+            onClick={() => setFilterType('catatan')}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              filterType === 'catatan'
+                ? 'bg-[#0EAAFC] text-white shadow-xs'
+                : 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-main)] hover:border-slate-300'
+            }`}
+          >
+            Catatan
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Bookmarks List */}
+      {filteredBookmarks.length === 0 ? (
+        <div className="text-center py-16 p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] space-y-2">
+          <Bookmark className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="text-sm font-bold text-[var(--text-main)]">
+            Belum ada bookmark tersimpan
+          </h3>
+          <p className="text-xs text-[var(--text-muted)] max-w-sm mx-auto">
+            Tandai ayat favorit saat membaca untuk membukanya kembali kapan saja dengan cepat.
+          </p>
+        </div>
+      ) : (
         <div className="space-y-3">
-          {processedBookmarks.length === 0 ? (
-            <div className="py-16 text-center text-[var(--text-muted)] bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] p-8 space-y-3 shadow-xs">
-              <Bookmark className="w-10 h-10 text-slate-300 mx-auto" />
-              <h3 className="text-sm font-semibold text-[var(--text-main)]">
-                {bookmarks.length === 0 ? 'Belum Ada Bookmark' : 'Tidak Ada Bookmark yang Cocok'}
-              </h3>
-              <p className="text-xs max-w-sm mx-auto leading-relaxed">
-                {bookmarks.length === 0
-                  ? 'Saat membaca surat, tekan ikon bookmark pada ayat untuk menyimpannya ke daftar ini.'
-                  : `Coba gunakan kata kunci pencarian yang lain.`}
-              </p>
-            </div>
-          ) : (
-            processedBookmarks.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => onNavigateToAyat(item.surahNomor, item.ayatNomor)}
-                className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-main)] card-interactive hover:border-[#0EAAFC]/60 hover:shadow-md transition-all cursor-pointer group flex items-start justify-between gap-4 active:scale-[0.985] shadow-xs"
-              >
-                <div className="space-y-2 flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-[var(--badge-blue-bg)] text-[#0877B9] font-mono">
-                      QS. {item.surahNamaLatin} : {item.ayatNomor}
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      Ditandai {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  </div>
+          {filteredBookmarks.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => onNavigateToAyat(item.surahNomor, item.ayatNomor)}
+              className="flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-main)] hover:border-[#43B433] transition-all cursor-pointer card-interactive"
+            >
+              <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
+                {/* Book Icon in Green Squircle */}
+                <div className="w-11 h-11 rounded-2xl bg-[#EAF7EE] text-[#43B433] flex items-center justify-center shrink-0 shadow-2xs">
+                  <BookOpen className="w-5 h-5" />
+                </div>
 
-                  <p
-                    lang="ar"
-                    dir="rtl"
-                    className="font-arabic text-xl text-[var(--text-main)] text-right line-clamp-2 leading-relaxed"
-                  >
-                    {item.teksArab}
-                  </p>
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-[var(--text-main)] truncate">
+                      {item.surahNamaLatin} · Ayat {item.ayatNomor}
+                    </h3>
+                  </div>
 
                   <p className="text-xs text-[var(--text-muted)] line-clamp-2 leading-relaxed">
                     "{item.teksIndonesia}"
                   </p>
-                </div>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={(e) => handleRemoveBookmark(e, item)}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer active:scale-90"
-                    title="Hapus Bookmark"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-
-                  <div className="p-2 text-[#0EAAFC] group-hover:translate-x-1 transition-transform">
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Tab 2: Notes */}
-      {activeTab === 'notes' && (
-        <div className="space-y-3">
-          {processedNotes.length === 0 ? (
-            <div className="py-16 text-center text-[var(--text-muted)] bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] p-8 space-y-3 shadow-xs">
-              <FileText className="w-10 h-10 text-slate-300 mx-auto" />
-              <h3 className="text-sm font-semibold text-[var(--text-main)]">
-                {Object.keys(notes).length === 0 ? 'Belum Ada Catatan Tadabbur' : 'Catatan Tidak Ditemukan'}
-              </h3>
-              <p className="text-xs max-w-sm mx-auto leading-relaxed">
-                {Object.keys(notes).length === 0
-                  ? 'Tekan tombol catatan pada ayat saat membaca untuk menuliskan renungan, tadabbur, atau pelajaran penting.'
-                  : 'Coba ubah kata kunci pencarian catatan.'}
-              </p>
-            </div>
-          ) : (
-            processedNotes.map((item) => (
-              <div
-                key={item.key}
-                onClick={() => onNavigateToAyat(item.surahNomor, item.ayatNomor)}
-                className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-main)] card-interactive hover:border-[#43B433]/60 hover:shadow-md transition-all cursor-pointer group flex items-start justify-between gap-4 active:scale-[0.985] shadow-xs"
-              >
-                <div className="space-y-2 flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-[#EAF8E8] text-[#228B22] font-mono">
-                      Surat ke-{item.surahNomor} : Ayat {item.ayatNomor}
+                  <div className="flex items-center gap-2 text-[10px] text-slate-400 pt-0.5">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(item.createdAt)}
                     </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-[var(--bg-card-subtle)] border border-[var(--border-subtle)] text-xs text-[var(--text-main)] leading-relaxed whitespace-pre-wrap font-sans">
-                    {item.text}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={(e) => handleRemoveNote(e, item.key)}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer active:scale-90"
-                    title="Hapus Catatan"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-
-                  <div className="p-2 text-[#43B433] group-hover:translate-x-1 transition-transform">
-                    <ArrowRight className="w-4 h-4" />
+                    <span>·</span>
+                    <span>{item.note ? 'Catatan pribadi' : 'Tanpa catatan'}</span>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      )}
 
-      {/* Tab 3: History & Activity */}
-      {activeTab === 'history' && (
-        <div className="space-y-5">
-          {/* Active Last Read Spot */}
-          {lastRead && (
-            <div
-              onClick={() => onNavigateToAyat(lastRead.surahNomor, lastRead.ayatNomor)}
-              className="p-5 rounded-2xl bg-[var(--bg-card)] border-2 border-[#0EAAFC]/30 shadow-sm card-interactive flex items-center justify-between gap-4 cursor-pointer hover:border-[#0EAAFC] transition-all active:scale-[0.985]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#0EAAFC] text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-[#0877B9] tracking-wider">
-                    Posisi Terakhir Membaca
-                  </span>
-                  <h3 className="text-base font-bold text-[var(--text-main)]">
-                    {lastRead.surahNamaLatin} : Ayat {lastRead.ayatNomor}
-                  </h3>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Terakhir dibaca: {new Date(lastRead.timestamp).toLocaleString('id-ID')}
-                  </p>
-                </div>
-              </div>
-
-              <span className="text-xs font-semibold text-[#0EAAFC] flex items-center gap-1 shrink-0">
-                <span>Lanjutkan</span>
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            </div>
-          )}
-
-          {/* Activity summary card */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] card-interactive flex items-center gap-3 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-[var(--badge-blue-bg)] text-[#0EAAFC] flex items-center justify-center shrink-0">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Hari Aktif Tilawah</span>
-                <p className="text-lg font-bold text-[var(--text-main)] font-mono tabular-nums">
-                  {historyLogs.length} hari tercatat
-                </p>
+              {/* Actions & Chevron */}
+              <div className="flex items-center gap-2 pl-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => handleRemoveBookmark(e, item)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
+                  title="Hapus bookmark"
+                  aria-label="Hapus bookmark"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </div>
             </div>
-
-            <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] card-interactive flex items-center gap-3 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-[#EAF8E8] text-[#43B433] flex items-center justify-center shrink-0">
-                <Flame className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Total Ayat Terbaca</span>
-                <p className="text-lg font-bold text-[var(--text-main)] font-mono tabular-nums">
-                  {totalAyatsRead} ayat
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Daily tilawah log table */}
-          <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] p-5 space-y-4 shadow-xs">
-            <h3 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#43B433]" />
-              Rekam Tilawah Harian
-            </h3>
-
-            {historyLogs.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)] py-4 text-center">
-                Belum ada rekam tilawah harian. Ayat yang Anda baca akan otomatis tercatat di sini.
-              </p>
-            ) : (
-              <div className="divide-y divide-[var(--border-subtle)] max-h-96 overflow-y-auto">
-                {historyLogs.slice().reverse().map((log) => (
-                  <div key={log.date} className="py-2.5 flex items-center justify-between text-xs">
-                    <span className="text-[var(--text-muted)] font-mono">
-                      {new Date(log.date).toLocaleDateString('id-ID', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </span>
-                    <span className="font-semibold text-[var(--text-main)] font-mono tabular-nums">
-                      {log.ayatCount} ayat dibaca
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          ))}
         </div>
       )}
     </div>

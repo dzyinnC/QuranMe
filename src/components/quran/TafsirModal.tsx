@@ -62,8 +62,8 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-4">
-      <div className="w-full max-w-2xl bg-[var(--bg-card)] rounded-2xl shadow-2xl border border-[var(--border-main)] text-[var(--text-main)] overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4">
+      <div className="w-full max-w-2xl bg-[var(--bg-card)] rounded-2xl shadow-2xl border border-[var(--border-main)] text-[var(--text-main)] overflow-hidden flex flex-col max-h-[90vh] modal-pop">
         {/* Header */}
         <div className="px-5 py-4 border-b border-[var(--border-main)] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -71,24 +71,24 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
               <BookMarked className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#202124]">
+              <h3 className="text-sm font-bold text-[var(--text-main)]">
                 Tafsir Kemenag RI
               </h3>
-              <p className="text-xs text-[#5F6368]">
+              <p className="text-xs text-[var(--text-muted)]">
                 {surahNamaLatin} : Ayat {selectedAyat} dari {totalAyat}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer active:scale-90 transition-transform"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Verse Selector Strip */}
-        <div className="px-5 py-2.5 bg-[#F7FAFC] border-b border-[#E5E7EB] flex items-center justify-between gap-2">
+        <div className="px-5 py-2.5 bg-[var(--bg-card-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
             <button
               onClick={() => setSelectedAyat((prev) => Math.max(1, prev - 1))}

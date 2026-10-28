@@ -283,25 +283,25 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
       <AutoScrollController onStatusChange={setIsAutoScrolling} />
 
       {/* Reader Top Sticky Bar */}
-      <div className="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#E5E7EB] shadow-2xs">
+      <div className="flex items-center justify-between gap-3 bg-[var(--bg-card)] p-3.5 rounded-2xl border border-[var(--border-main)] card-interactive shadow-xs backdrop-blur-md">
         <div className="flex items-center gap-2">
           <button
             onClick={onBackToList}
-            className="p-2 rounded-xl text-[#5F6368] hover:text-[#202124] hover:bg-slate-100 transition-colors cursor-pointer active:scale-95"
+            className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-subtle)] transition-colors cursor-pointer active:scale-95"
             title="Kembali ke Daftar Surat"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
 
           <div>
-            <h2 className="text-sm sm:text-base font-bold text-[#202124] flex items-center gap-2">
+            <h2 className="text-sm sm:text-base font-bold text-[var(--text-main)] flex items-center gap-2">
               <span>{surahDetail ? surahDetail.namaLatin : `Surat ke-${surahNomor}`}</span>
               {surahDetail && (
-                <span className="text-xs font-normal text-[#5F6368]">({surahDetail.arti})</span>
+                <span className="text-xs font-normal text-[var(--text-muted)]">({surahDetail.arti})</span>
               )}
             </h2>
             {surahDetail && (
-              <p className="text-[11px] text-[#5F6368]">
+              <p className="text-[11px] text-[var(--text-muted)]">
                 {surahDetail.tempatTurun} · {surahDetail.jumlahAyat} Ayat
               </p>
             )}
@@ -315,7 +315,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
             <select
               aria-label="Pilih nomor ayat"
               onChange={(e) => handleJumpToAyat(Number(e.target.value))}
-              className="text-xs bg-[#F7FAFC] border border-[#E5E7EB] rounded-xl px-2.5 py-1.5 text-[#202124] cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0EAAFC]"
+              className="text-xs bg-[var(--bg-card-subtle)] border border-[var(--border-subtle)] rounded-xl px-2.5 py-1.5 text-[var(--text-main)] cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0EAAFC]"
               defaultValue={initialAyatNomor}
             >
               <option disabled value="">Pilih Ayat</option>
@@ -335,7 +335,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
                   setShowQariMenu(!showQariMenu);
                   setShowAppearanceMenu(false);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-[#E8F6FF] text-[#0877B9] hover:bg-[#0EAAFC] hover:text-white transition-all cursor-pointer active:scale-95 shadow-2xs"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-[var(--badge-blue-bg)] text-[#0877B9] hover:bg-[#0EAAFC] hover:text-white transition-all cursor-pointer active:scale-95 shadow-2xs"
                 title="Pilih Qari & Putar Murottal"
               >
                 <Volume2 className="w-3.5 h-3.5" />
@@ -344,12 +344,12 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
 
               {/* Qari Popover */}
               {showQariMenu && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-[#E5E7EB] rounded-2xl shadow-xl p-3 z-50 animate-in fade-in duration-100">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <span className="text-xs font-bold text-[#202124]">Putar Murottal Surat:</span>
+                <div className="absolute right-0 top-full mt-2 w-72 bg-[var(--bg-card)] border border-[var(--border-main)] rounded-2xl shadow-xl p-3 z-50 animate-in fade-in duration-100 backdrop-blur-md">
+                  <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+                    <span className="text-xs font-bold text-[var(--text-main)]">Putar Murottal Surat:</span>
                     <button
                       onClick={() => setShowQariMenu(false)}
-                      className="text-[11px] text-[#5F6368] hover:text-[#202124]"
+                      className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
                     >
                       Tutup
                     </button>
@@ -421,12 +421,12 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
 
       {/* Appearance Menu Popover */}
       {showAppearanceMenu && (
-        <div className="p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-lg space-y-4 text-xs animate-in fade-in duration-150">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="font-bold text-[#202124]">Pengaturan Teks & Tampilan</span>
+        <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-main)] shadow-lg space-y-4 text-xs animate-in fade-in duration-150 backdrop-blur-md">
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+            <span className="font-bold text-[var(--text-main)]">Pengaturan Teks & Tampilan</span>
             <button
               onClick={() => setShowAppearanceMenu(false)}
-              className="text-[#5F6368] hover:text-[#202124] cursor-pointer"
+              className="text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
             >
               Tutup
             </button>
@@ -500,7 +500,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
           <p className="text-xs">Memuat ayat-ayat suci Al-Qur'an...</p>
         </div>
       ) : error ? (
-        <div className="py-16 flex flex-col items-center justify-center text-center gap-3 bg-white p-8 rounded-3xl border border-[#E5E7EB]">
+        <div className="py-16 flex flex-col items-center justify-center text-center gap-3 bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border-main)]">
           <p className="text-xs text-red-600 bg-red-50 p-3 rounded-xl max-w-md">{error}</p>
           <button
             onClick={() => {
@@ -516,7 +516,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
                   setIsLoading(false);
                 });
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-[#0EAAFC] text-white hover:bg-[#0877B9] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-[#0EAAFC] text-white hover:bg-[#0877B9] cursor-pointer active:scale-95 transition-transform"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Coba Lagi</span>
@@ -525,20 +525,20 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
       ) : surahDetail ? (
         <div className="space-y-6">
           {/* Surah Header Card */}
-          <div className="relative overflow-hidden p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#0EAAFC]/8 via-white to-[#43B433]/8 border border-[#E5E7EB] text-center space-y-3 shadow-2xs">
+          <div className="relative overflow-hidden p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#0EAAFC]/10 via-[var(--bg-card)] to-[#43B433]/10 border border-[var(--border-main)] text-center space-y-3 shadow-sm card-interactive">
             <span
               lang="ar"
               dir="rtl"
-              className="font-arabic text-3xl sm:text-5xl text-[#202124] block leading-tight"
+              className="font-arabic text-3xl sm:text-5xl text-[var(--text-main)] block leading-tight"
             >
               {surahDetail.nama}
             </span>
 
-            <h1 className="text-xl sm:text-2xl font-bold text-[#202124]">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-main)]">
               {surahDetail.namaLatin}
             </h1>
 
-            <div className="flex items-center justify-center gap-2 text-xs text-[#5F6368]">
+            <div className="flex items-center justify-center gap-2 text-xs text-[var(--text-muted)]">
               <span>Arti: {surahDetail.arti}</span>
               <span>·</span>
               <span>Diturunkan di {surahDetail.tempatTurun}</span>
@@ -550,7 +550,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
             <div className="pt-2">
               <button
                 onClick={() => setShowInfo(!showInfo)}
-                className="text-xs font-semibold text-[#0EAAFC] hover:underline flex items-center gap-1 mx-auto cursor-pointer"
+                className="text-xs font-semibold text-[#0EAAFC] hover:underline flex items-center gap-1 mx-auto cursor-pointer active:scale-95"
               >
                 <Info className="w-3.5 h-3.5" />
                 <span>{showInfo ? 'Sembunyikan Deskripsi Surat' : 'Baca Deskripsi & Asbabun Nuzul'}</span>
@@ -558,7 +558,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
 
               {showInfo && (
                 <div
-                  className="mt-4 p-4 rounded-2xl bg-white border border-[#E5E7EB] text-xs text-left text-[#5F6368] leading-relaxed max-w-2xl mx-auto shadow-xs"
+                  className="mt-4 p-4 rounded-2xl bg-[var(--bg-card-subtle)] border border-[var(--border-subtle)] text-xs text-left text-[var(--text-muted)] leading-relaxed max-w-2xl mx-auto shadow-xs"
                   dangerouslySetInnerHTML={{
                     __html: surahDetail.deskripsi
                       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
@@ -570,15 +570,15 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
 
             {/* Bismillah */}
             {surahDetail.nomor !== 1 && surahDetail.nomor !== 9 && (
-              <div className="pt-4 border-t border-slate-200/60 mt-4">
+              <div className="pt-4 border-t border-[var(--border-subtle)] mt-4">
                 <p
                   lang="ar"
                   dir="rtl"
-                  className="font-arabic text-2xl sm:text-3xl text-[#202124] leading-relaxed"
+                  className="font-arabic text-2xl sm:text-3xl text-[var(--text-main)] leading-relaxed"
                 >
                   بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
                 </p>
-                <p className="text-xs text-[#5F6368] mt-1 italic">
+                <p className="text-xs text-[var(--text-muted)] mt-1 italic">
                   Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
                 </p>
               </div>
@@ -632,13 +632,13 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
           )}
 
           {/* Bottom Surah Navigation */}
-          <div className="pt-6 border-t border-[#E5E7EB] flex items-center justify-between gap-4">
+          <div className="pt-6 border-t border-[var(--border-main)] flex items-center justify-between gap-4">
             {surahDetail.suratSebelumnya ? (
               <button
                 onClick={() =>
                   onNavigateSurah(surahDetail.suratSebelumnya ? surahDetail.suratSebelumnya.nomor : 1)
                 }
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[#E5E7EB] bg-white text-xs font-semibold text-[#202124] hover:border-[#0EAAFC] hover:text-[#0EAAFC] transition-colors cursor-pointer active:scale-95"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] text-xs font-semibold text-[var(--text-main)] hover:border-[#0EAAFC] hover:text-[#0EAAFC] transition-all cursor-pointer active:scale-95 shadow-2xs card-interactive"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <div className="text-left hidden sm:block">
@@ -653,7 +653,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
 
             <button
               onClick={onBackToList}
-              className="px-4 py-2 text-xs font-medium text-[#5F6368] hover:text-[#202124] cursor-pointer"
+              className="px-4 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
             >
               Semua Surat
             </button>
@@ -663,7 +663,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
                 onClick={() =>
                   onNavigateSurah(surahDetail.suratSelanjutnya ? surahDetail.suratSelanjutnya.nomor : 1)
                 }
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[#E5E7EB] bg-white text-xs font-semibold text-[#202124] hover:border-[#0EAAFC] hover:text-[#0EAAFC] transition-colors cursor-pointer active:scale-95"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] text-xs font-semibold text-[var(--text-main)] hover:border-[#0EAAFC] hover:text-[#0EAAFC] transition-all cursor-pointer active:scale-95 shadow-2xs card-interactive"
               >
                 <div className="text-right hidden sm:block">
                   <span className="block text-[10px] text-slate-400">Surat Selanjutnya</span>

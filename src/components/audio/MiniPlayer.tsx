@@ -167,7 +167,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
               </button>
 
               {showSpeedDropdown && (
-                <div className="absolute right-0 bottom-full mb-2 bg-white border border-[#E5E7EB] rounded-xl shadow-lg p-1.5 w-24 z-50">
+                <div className="absolute right-0 bottom-full mb-2 bg-[var(--bg-card)] border border-[var(--border-main)] rounded-xl shadow-lg p-1.5 w-24 z-50 backdrop-blur-md">
                   <span className="block text-[10px] text-slate-400 font-semibold px-2 py-0.5">
                     Kecepatan
                   </span>
@@ -178,10 +178,10 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
                         audioService.setPlaybackRate(rate);
                         setShowSpeedDropdown(false);
                       }}
-                      className={`w-full text-left px-2 py-1 text-xs rounded-lg cursor-pointer ${
+                      className={`w-full text-left px-2 py-1 text-xs rounded-lg cursor-pointer transition-colors active:scale-95 ${
                         audioState.playbackRate === rate
                           ? 'bg-[#E8F6FF] text-[#0877B9] font-bold'
-                          : 'hover:bg-slate-50 text-slate-700'
+                          : 'hover:bg-[var(--bg-card-subtle)] text-[var(--text-main)]'
                       }`}
                     >
                       {rate}x
@@ -197,7 +197,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
                 setShowQariDropdown(!showQariDropdown);
                 setShowSpeedDropdown(false);
               }}
-              className="p-1.5 text-slate-500 hover:text-[#0EAAFC] transition-colors cursor-pointer"
+              className="p-1.5 text-slate-500 hover:text-[#0EAAFC] transition-colors cursor-pointer active:scale-95"
               title="Ganti Qari Murottal"
             >
               <Volume2 className="w-4 h-4" />
@@ -210,7 +210,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
                 setShowQariDropdown(false);
                 setShowSpeedDropdown(false);
               }}
-              className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer active:scale-95"
               title="Tutup Pemutar"
             >
               <X className="w-4 h-4" />
@@ -227,7 +227,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
 
         {/* Qari Selection Panel */}
         {showQariDropdown && (
-          <div className="mt-3 pt-3 border-t border-[#E5E7EB] space-y-2 animate-in fade-in duration-100">
+          <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] space-y-2 animate-in fade-in duration-100">
             {/* Filter Tabs */}
             <div className="flex items-center justify-between pb-1">
               <span className="text-[11px] font-bold text-[#202124]">Pilih Qari Murottal:</span>
@@ -289,7 +289,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
                     className={`text-left text-xs p-2 rounded-xl flex items-center justify-between cursor-pointer transition-colors ${
                       isSelected
                         ? 'bg-[#E8F6FF] text-[#0877B9] font-semibold border border-[#0EAAFC]/30'
-                        : 'hover:bg-slate-50 text-[#202124]'
+                        : 'hover:bg-[var(--bg-card-subtle)] text-[var(--text-main)]'
                     }`}
                   >
                     <div className="min-w-0 pr-2">

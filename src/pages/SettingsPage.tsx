@@ -1,40 +1,46 @@
 import React, { useState } from 'react';
 import {
   AlertTriangle,
-  Award,
-  BookOpen,
+  ArrowLeft,
+  Bell,
   Check,
-  CheckCircle2,
+  ChevronRight,
   Download,
   Info,
   Moon,
-  Palette,
   RotateCcw,
   Sliders,
   Sparkles,
   Sun,
   Trash2,
+  Type,
+  User,
   Volume2,
 } from 'lucide-react';
-import { ALL_QARI, APP_CONFIG, BRAND_IDENTITY, INDONESIAN_QARI, INTERNATIONAL_QARI } from '../config/appConfig';
-import { DEFAULT_SETTINGS, StorageService } from '../services/storageService';
-import { UserSettings } from '../types/quran';
+import { MosqueSilhouette } from '../components/common/IslamicOrnaments';
 import { PWAInstallButton } from '../components/common/PWAInstallButton';
 import { toast } from '../components/common/Toast';
+import { ALL_QARI, INDONESIAN_QARI, INTERNATIONAL_QARI } from '../config/appConfig';
+import { StorageService } from '../services/storageService';
+import { ThemeBackground, UserSettings } from '../types/quran';
 
 interface SettingsPageProps {
   settings: UserSettings;
   onUpdateSettings: (newSettings: Partial<UserSettings>) => void;
   onResetAllData: () => void;
+  onBack?: () => void;
+  onOpenThemeModal?: () => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   settings,
   onUpdateSettings,
   onResetAllData,
+  onBack,
+  onOpenThemeModal,
 }) => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [qariFilter, setQariFilter] = useState<'all' | 'idn' | 'intl'>('idn');
+  const currentTheme = settings.themeBackground || 'light';
 
   const handleReset = () => {
     onResetAllData();
@@ -42,465 +48,345 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     toast.show('Data lokal dan preferensi berhasil direset', 'info');
   };
 
-  const displayedQari =
-    qariFilter === 'idn'
-      ? INDONESIAN_QARI
-      : qariFilter === 'intl'
-      ? INTERNATIONAL_QARI
-      : ALL_QARI;
-
-  const currentTheme = settings.themeBackground || 'light';
+  const handleSelectTheme = (theme: ThemeBackground) => {
+    onUpdateSettings({ themeBackground: theme });
+    const label =
+      theme === 'light'
+        ? 'Standard Light (Putih)'
+        : theme === 'dark'
+        ? 'Standard Dark (Hitam)'
+        : 'Premium Gradient';
+    toast.show(`Tema diubah: ${label}`);
+  };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-20 animate-in fade-in duration-200">
-      {/* Page Header */}
-      <div className="pb-2 border-b border-[var(--border-main)]">
-        <h1 className="text-2xl font-bold text-[var(--text-main)]">Pengaturan</h1>
-        <p className="text-xs text-[var(--text-muted)] mt-0.5">
-          Sesuaikan sistem background, tipografi mushaf, qari murottal (termasuk Qari Indonesia), target tilawah harian, dan preferensi aplikasi
-        </p>
+    <div className="space-y-6 pb-20 animate-in fade-in duration-200">
+      {/* 1. Header (Matching Reference Screen 9) */}
+      <div className="flex items-center justify-between pb-2 border-b border-[var(--border-main)]">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="w-9 h-9 rounded-full bg-[var(--bg-card-subtle)] hover:bg-[var(--border-main)] text-[var(--text-main)] flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Kembali"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <h1 className="text-2xl font-extrabold text-[var(--text-main)] tracking-tight">
+            Pengaturan
+          </h1>
+        </div>
       </div>
 
-      {/* Group 0: 3 Background QuranMe System */}
-      <section className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border-main)] p-5 sm:p-6 space-y-4 shadow-sm card-interactive">
-        <div>
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
-              <Palette className="w-4 h-4 text-[#0EAAFC]" />
-              <span>Sistem 3 Background QuranMe</span>
-            </h2>
-            <span className="text-[11px] font-semibold text-[#0EAAFC] bg-[var(--badge-blue-bg)] px-2.5 py-0.5 rounded-full border border-[var(--border-subtle)]">
-              {currentTheme === 'light'
-                ? 'Standard Light'
-                : currentTheme === 'dark'
-                ? 'Standard Dark'
-                : 'Premium Aurora'}
+      {/* 2. User Profile Card (Matching Reference Screen 9) */}
+      <div className="relative overflow-hidden rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-5 sm:p-6 shadow-xs flex items-center justify-between">
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#0EAAFC] to-[#43B433] p-0.5 shadow-xs">
+            <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center font-bold text-[#0877B9] text-xl">
+              A
+            </div>
+          </div>
+
+          <div className="space-y-0.5">
+            <h2 className="text-base font-bold text-[var(--text-main)]">Ahmad</h2>
+            <p className="text-xs text-[var(--text-muted)]">ahmad@example.com</p>
+            <span className="text-[10px] font-semibold text-[#43B433] bg-[#EAF7EE] px-2 py-0.5 rounded-full inline-block">
+              Akun Aktif
             </span>
           </div>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">
-            Pilih karakter visual sesuai kenyamanan mata dan spesifikasi perangkat Anda:
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          {/* 1. Standard Light */}
+        {/* Subtle Mosque Silhouette watermark */}
+        <div className="absolute right-0 bottom-0 text-[#0EAAFC] pointer-events-none opacity-15">
+          <MosqueSilhouette className="w-32 h-20 text-[#0EAAFC]" opacity={1} />
+        </div>
+      </div>
+
+      {/* 3. Account & Notifications List Items */}
+      <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] divide-y divide-[var(--border-subtle)] overflow-hidden shadow-xs">
+        <div className="flex items-center justify-between p-4 sm:p-5 hover:bg-[var(--bg-card-subtle)] transition-colors cursor-pointer">
+          <div className="flex items-center gap-3">
+            <User className="w-5 h-5 text-[#0EAAFC]" />
+            <span className="text-sm font-semibold text-[var(--text-main)]">
+              Akun & Profil
+            </span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+        </div>
+
+        <div className="flex items-center justify-between p-4 sm:p-5 hover:bg-[var(--bg-card-subtle)] transition-colors cursor-pointer">
+          <div className="flex items-center gap-3">
+            <Bell className="w-5 h-5 text-[#43B433]" />
+            <span className="text-sm font-semibold text-[var(--text-main)]">
+              Notifikasi Pengingat
+            </span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+        </div>
+      </div>
+
+      {/* 4. Section: Sistem Background & Tema (3 Visual Cards Matching Reference Screen 9) */}
+      <section className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#0EAAFC]" />
+            <h3 className="text-sm font-bold text-[var(--text-main)]">
+              Sistem Background & Tema
+            </h3>
+          </div>
           <button
-            onClick={() => {
-              onUpdateSettings({ themeBackground: 'light' });
-              toast.show('Standard Light aktif: Putih bersih, 100% ringan');
-            }}
-            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between relative overflow-hidden group ${
+            onClick={onOpenThemeModal}
+            className="text-xs font-semibold text-[#0EAAFC] hover:text-[#0877B9] cursor-pointer"
+          >
+            Pilih Tema &rsaquo;
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          {/* Light Card */}
+          <button
+            type="button"
+            onClick={() => handleSelectTheme('light')}
+            className={`flex flex-col items-center text-center p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer relative ${
               currentTheme === 'light'
-                ? 'border-[#0EAAFC] bg-white ring-2 ring-[#0EAAFC]/30 shadow-md'
-                : 'border-[#E5E7EB] bg-white hover:border-[#0EAAFC]/50 hover:bg-slate-50'
+                ? 'border-[#0EAAFC] bg-[#E8F6FF]/60 shadow-xs'
+                : 'border-[var(--border-main)] bg-[var(--bg-card)] hover:border-slate-300'
             }`}
           >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#202124]">
-                  <Sun className="w-4 h-4 text-[#0EAAFC]" />
-                  Standard Light
-                </span>
-                {currentTheme === 'light' && (
-                  <span className="w-5 h-5 rounded-full bg-[#0EAAFC] text-white flex items-center justify-center text-[10px]">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-[#5F6368] leading-relaxed">
-                Putih bersih, kontras tinggi, zero-blur. Paling ringan dan hemat baterai untuk ponsel berspesifikasi rendah.
-              </p>
-            </div>
-            <div className="mt-4 p-2 bg-[#F7FAFC] border border-[#E5E7EB] rounded-xl flex items-center justify-between">
-              <span className="text-[11px] font-arabic text-[#202124]">الْحَمْدُ لِلّٰهِ</span>
-              <span className="text-[9px] text-[#0877B9] font-mono font-bold bg-[#E8F6FF] px-1.5 py-0.5 rounded">
-                100% Ringan
+            {currentTheme === 'light' && (
+              <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#0EAAFC] text-white flex items-center justify-center text-[10px]">
+                <Check className="w-3 h-3 stroke-[3]" />
               </span>
-            </div>
+            )}
+            <Sun className="w-6 h-6 text-amber-500 mb-2" />
+            <span className="text-xs font-bold text-[var(--text-main)]">Light</span>
+            <span className="text-[10px] text-[var(--text-muted)] mt-0.5">Bersih & fokus</span>
           </button>
 
-          {/* 2. Standard Dark */}
+          {/* Dark Card */}
           <button
-            onClick={() => {
-              onUpdateSettings({ themeBackground: 'dark' });
-              toast.show('Standard Dark aktif: Hitam nyaman untuk mata');
-            }}
-            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between relative overflow-hidden group ${
+            type="button"
+            onClick={() => handleSelectTheme('dark')}
+            className={`flex flex-col items-center text-center p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer relative ${
               currentTheme === 'dark'
-                ? 'border-[#0EAAFC] bg-[#1C2025] ring-2 ring-[#0EAAFC]/40 shadow-md'
-                : 'border-[#2D333B] bg-[#1C2025] hover:border-[#0EAAFC]/50 hover:bg-[#252B33]'
+                ? 'border-[#0EAAFC] bg-slate-900 shadow-xs'
+                : 'border-[var(--border-main)] bg-[var(--bg-card)] hover:border-slate-300'
             }`}
           >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F1F3F4]">
-                  <Moon className="w-4 h-4 text-[#0EAAFC]" />
-                  Standard Dark
-                </span>
-                {currentTheme === 'dark' && (
-                  <span className="w-5 h-5 rounded-full bg-[#0EAAFC] text-white flex items-center justify-center text-[10px]">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-[#9AA0A6] leading-relaxed">
-                Latar hitam pekat nyaman untuk membaca malam hari, ramah mata OLED tanpa animasi berat.
-              </p>
-            </div>
-            <div className="mt-4 p-2 bg-[#121417] border border-[#2D333B] rounded-xl flex items-center justify-between">
-              <span className="text-[11px] font-arabic text-[#F1F3F4]">الْحَمْدُ لِلّٰهِ</span>
-              <span className="text-[9px] text-[#60C5FF] font-mono font-bold bg-[#0EAAFC]/20 px-1.5 py-0.5 rounded">
-                Mode Malam
+            {currentTheme === 'dark' && (
+              <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#0EAAFC] text-white flex items-center justify-center text-[10px]">
+                <Check className="w-3 h-3 stroke-[3]" />
               </span>
-            </div>
+            )}
+            <Moon className="w-6 h-6 text-sky-400 mb-2" />
+            <span className="text-xs font-bold text-[var(--text-main)]">Dark</span>
+            <span className="text-[10px] text-[var(--text-muted)] mt-0.5">Menenangkan</span>
           </button>
 
-          {/* 3. Premium Gradient - Soft Magical Aurora Standout */}
+          {/* Premium Gradient Card */}
           <button
-            onClick={() => {
-              onUpdateSettings({ themeBackground: 'premium' });
-              toast.show('Mode Premium Aurora aktif: Gradasi lembut & aesthetic');
-            }}
-            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between relative overflow-hidden group ${
+            type="button"
+            onClick={() => handleSelectTheme('premium')}
+            className={`flex flex-col items-center text-center p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer relative ${
               currentTheme === 'premium'
-                ? 'border-[#0EAAFC] bg-gradient-to-br from-[#E6F5FC] via-white to-[#EFFCF4] ring-2 ring-[#0EAAFC]/40 shadow-lg'
-                : 'border-[#CFE2FE] bg-gradient-to-br from-[#F0F9FF] to-[#F5FBFE] hover:border-[#0EAAFC]'
+                ? 'border-[#43B433] bg-[#EAF7EE] shadow-xs'
+                : 'border-[var(--border-main)] bg-[var(--bg-card)] hover:border-emerald-300'
             }`}
           >
-            {/* Visual Aurora Mini Accent */}
-            <div className="absolute -top-6 -right-6 w-20 h-20 bg-gradient-to-br from-[#0EAAFC]/30 to-[#43B433]/30 rounded-full blur-xl pointer-events-none" />
-
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1A202C]">
-                  <Sparkles className="w-4 h-4 text-[#43B433]" />
-                  Premium Gradient
-                </span>
-                {currentTheme === 'premium' ? (
-                  <span className="w-5 h-5 rounded-full bg-[#0EAAFC] text-white flex items-center justify-center text-[10px]">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </span>
-                ) : (
-                  <span className="text-[9px] font-bold text-[#0877B9] bg-[#E8F6FF] px-1.5 py-0.5 rounded-full">
-                    Aesthetic
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-[#4A5568] leading-relaxed">
-                "Soft Magical Aurora" dinamis dengan gradasi langit biru muda, toska sejuk, dan mint segar. Kartu translucent elegan.
-              </p>
-            </div>
-
-            {/* Live Aurora Preview Strip */}
-            <div className="mt-4 p-2.5 bg-gradient-to-r from-[#BFE8FF]/70 via-[#D8F7F1]/80 to-[#DDF5E5]/70 border border-[#0EAAFC]/30 rounded-xl flex items-center justify-between shadow-2xs backdrop-blur-xs relative z-10">
-              <span className="text-[11px] font-arabic font-bold text-[#1A202C]">الْحَمْدُ لِلّٰهِ</span>
-              <span className="text-[9px] text-[#228B22] font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded shadow-2xs flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#43B433] animate-pulse" />
-                Soft Aurora
+            {currentTheme === 'premium' && (
+              <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#43B433] text-white flex items-center justify-center text-[10px]">
+                <Check className="w-3 h-3 stroke-[3]" />
               </span>
-            </div>
+            )}
+            <Sparkles className="w-6 h-6 text-[#43B433] mb-2" />
+            <span className="text-xs font-bold text-[var(--text-main)]">Premium</span>
+            <span className="text-[10px] text-[var(--text-muted)] mt-0.5">Magical Aurora</span>
           </button>
         </div>
       </section>
 
-      {/* Group 1: Typography & Reading Display */}
-      <section className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border-main)] p-5 sm:p-6 space-y-5 shadow-sm card-interactive">
-        <h2 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-[#0EAAFC]" />
-          <span>Tampilan & Tipografi Membaca</span>
-        </h2>
-
-        {/* Live Preview Box */}
-        <div className="p-4 rounded-2xl bg-[var(--bg-card-subtle)] border border-[var(--border-subtle)] space-y-2">
-          <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">
-            Pratinjau Teks
-          </span>
-          <p
-            lang="ar"
-            dir="rtl"
-            className="font-arabic text-[var(--text-main)] text-right leading-loose"
-            style={{ fontSize: `${settings.arabicFontSize}px` }}
-          >
-            بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
-          </p>
-          {settings.showLatin && (
-            <p className="text-xs text-[#0877B9] italic">
-              Bismillāhir-raḥmānir-raḥīm(i).
-            </p>
-          )}
-          {settings.showTranslation && (
-            <p
-              className="text-[var(--text-main)] leading-relaxed"
-              style={{ fontSize: `${settings.translationFontSize}px` }}
-            >
-              Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang.
-            </p>
-          )}
-        </div>
-
-        {/* Arabic Font Size Slider */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-            <span className="font-semibold text-[var(--text-main)]">Ukuran Teks Arab</span>
-            <span className="font-mono tabular-nums font-bold text-[#0EAAFC]">
-              {settings.arabicFontSize} px
+      {/* 5. Reading Preferences: Typography & Toggles */}
+      <section className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] divide-y divide-[var(--border-subtle)] overflow-hidden shadow-xs">
+        {/* Ukuran Teks Arab */}
+        <div className="p-4 sm:p-5 flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="text-sm font-semibold text-[var(--text-main)] block">
+              Ukuran Teks Arab
+            </span>
+            <span className="text-xs text-[var(--text-muted)]">
+              Sesuaikan keterbacaan huruf hijaiyah
             </span>
           </div>
-          <input
-            type="range"
-            min="22"
-            max="44"
-            step="2"
-            value={settings.arabicFontSize}
-            onChange={(e) => onUpdateSettings({ arabicFontSize: Number(e.target.value) })}
-            className="w-full accent-[#0EAAFC] cursor-pointer"
-          />
-          <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
-            <span>Kecil (22px)</span>
-            <span>Standar (30px)</span>
-            <span>Besar (44px)</span>
-          </div>
-        </div>
 
-        {/* Translation Font Size Slider */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-            <span className="font-semibold text-[var(--text-main)]">Ukuran Terjemahan Indonesia</span>
-            <span className="font-mono tabular-nums font-bold text-[#0EAAFC]">
-              {settings.translationFontSize} px
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={24}
+              max={44}
+              value={settings.arabicFontSize || 32}
+              onChange={(e) => onUpdateSettings({ arabicFontSize: parseInt(e.target.value, 10) })}
+              className="w-24 sm:w-32 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#0EAAFC]"
+            />
+            <span className="text-xs font-bold text-[#0EAAFC] font-mono min-w-[42px] text-right">
+              {settings.arabicFontSize || 32} px
             </span>
           </div>
-          <input
-            type="range"
-            min="13"
-            max="22"
-            step="1"
-            value={settings.translationFontSize}
-            onChange={(e) => onUpdateSettings({ translationFontSize: Number(e.target.value) })}
-            className="w-full accent-[#0EAAFC] cursor-pointer"
-          />
         </div>
 
-        {/* Visibility Toggles */}
-        <div className="pt-2 border-t border-[var(--border-subtle)] space-y-3 text-xs">
-          <label className="flex items-center justify-between cursor-pointer p-1 rounded-xl hover:bg-[var(--bg-card-subtle)] transition-colors">
-            <div>
-              <span className="font-medium text-[var(--text-main)] block">Tampilkan Transliterasi Latin</span>
-              <span className="text-[11px] text-[var(--text-muted)]">Membantu pelafalan huruf dan tanda baca Arab</span>
-            </div>
+        {/* Ukuran Terjemahan Indonesia */}
+        <div className="p-4 sm:p-5 flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="text-sm font-semibold text-[var(--text-main)] block">
+              Ukuran Terjemahan Indonesia
+            </span>
+            <span className="text-xs text-[var(--text-muted)]">
+              Kenyamanan membaca arti perkata
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={13}
+              max={22}
+              value={settings.translationFontSize || 15}
+              onChange={(e) =>
+                onUpdateSettings({ translationFontSize: parseInt(e.target.value, 10) })
+              }
+              className="w-24 sm:w-32 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#0EAAFC]"
+            />
+            <span className="text-xs font-bold text-[#0EAAFC] font-mono min-w-[42px] text-right">
+              {settings.translationFontSize || 15} px
+            </span>
+          </div>
+        </div>
+
+        {/* Toggle Transliterasi Latin */}
+        <div className="p-4 sm:p-5 flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="text-sm font-semibold text-[var(--text-main)] block">
+              Tampilan Transliterasi Latin
+            </span>
+            <span className="text-xs text-[var(--text-muted)]">
+              Panduan bacaan fonetik latin Indonesia
+            </span>
+          </div>
+
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
               checked={settings.showLatin}
               onChange={(e) => onUpdateSettings({ showLatin: e.target.checked })}
-              className="w-4 h-4 rounded accent-[#0EAAFC]"
+              className="sr-only peer"
             />
-          </label>
-
-          <label className="flex items-center justify-between cursor-pointer p-1 rounded-xl hover:bg-[var(--bg-card-subtle)] transition-colors">
-            <div>
-              <span className="font-medium text-[var(--text-main)] block">Tampilkan Terjemahan Indonesia</span>
-              <span className="text-[11px] text-[var(--text-muted)]">Terjemahan resmi Kementerian Agama Republik Indonesia</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.showTranslation}
-              onChange={(e) => onUpdateSettings({ showTranslation: e.target.checked })}
-              className="w-4 h-4 rounded accent-[#0EAAFC]"
-            />
+            <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#43B433]"></div>
           </label>
         </div>
       </section>
 
-      {/* Group 2: Audio Murottal & Qari (With Indonesian Qari Highlight) */}
-      <section className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border-main)] p-5 sm:p-6 space-y-4 shadow-sm card-interactive">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      {/* 6. Tilawah Target & Default Qari */}
+      <section className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 shadow-xs space-y-4">
+        <h3 className="text-sm font-bold text-[var(--text-main)]">
+          Target Tilawah & Murottal Bawaan
+        </h3>
+
+        <div className="space-y-3">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
-              <Volume2 className="w-4 h-4 text-[#43B433]" />
-              <span>Qari Murottal Pilihan</span>
-            </h2>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              Pilih qari favorit Anda (tersedia 5 Qari Indonesia terverifikasi):
-            </p>
+            <label className="text-xs font-semibold text-[var(--text-muted)] block mb-1.5">
+              Target Tilawah Harian (Ayat per Hari)
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {[5, 10, 20, 30].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => onUpdateSettings({ dailyTargetAyat: t })}
+                  className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    settings.dailyTargetAyat === t
+                      ? 'bg-[#43B433] text-white shadow-xs'
+                      : 'bg-[var(--bg-card-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  {t} Ayat
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1 p-1 bg-[var(--bg-card-subtle)] border border-[var(--border-subtle)] rounded-xl self-start sm:self-auto text-xs">
-            <button
-              onClick={() => setQariFilter('idn')}
-              className={`px-2.5 py-1 rounded-lg cursor-pointer font-medium transition-all active:scale-95 ${
-                qariFilter === 'idn'
-                  ? 'bg-[#43B433] text-white font-bold shadow-xs'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-              }`}
+          <div className="pt-2">
+            <label className="text-xs font-semibold text-[var(--text-muted)] block mb-1.5">
+              Qari Murottal Default
+            </label>
+            <select
+              value={settings.defaultQari}
+              onChange={(e) => onUpdateSettings({ defaultQari: e.target.value })}
+              className="w-full p-3 rounded-2xl bg-[var(--bg-card-subtle)] border border-[var(--border-main)] text-xs font-medium text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[#0EAAFC]/30"
             >
-              Qari Indonesia ({INDONESIAN_QARI.length})
-            </button>
-            <button
-              onClick={() => setQariFilter('intl')}
-              className={`px-2.5 py-1 rounded-lg cursor-pointer font-medium transition-all active:scale-95 ${
-                qariFilter === 'intl'
-                  ? 'bg-[#0EAAFC] text-white font-bold shadow-xs'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-              }`}
-            >
-              Internasional ({INTERNATIONAL_QARI.length})
-            </button>
-            <button
-              onClick={() => setQariFilter('all')}
-              className={`px-2.5 py-1 rounded-lg cursor-pointer font-medium transition-all active:scale-95 ${
-                qariFilter === 'all'
-                  ? 'bg-[#202124] text-white font-bold shadow-xs'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-              }`}
-            >
-              Semua
-            </button>
+              <optgroup label="Qari Indonesia">
+                {INDONESIAN_QARI.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {q.name} (Indonesia)
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Qari Internasional">
+                {INTERNATIONAL_QARI.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {q.name} ({q.country})
+                  </option>
+                ))}
+              </optgroup>
+            </select>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {displayedQari.map((qari) => {
-            const isSelected = settings.defaultQari === qari.id;
-            return (
-              <button
-                key={qari.id}
-                onClick={() => {
-                  onUpdateSettings({ defaultQari: qari.id });
-                  toast.show(`Qari aktif diubah: ${qari.name}`);
-                }}
-                className={`p-3.5 rounded-2xl border text-left flex items-start justify-between cursor-pointer transition-all active:scale-[0.98] ${
-                  isSelected
-                    ? 'border-[#0EAAFC] bg-[var(--badge-blue-bg)] text-[#0877B9] ring-2 ring-[#0EAAFC]/30 shadow-xs'
-                    : 'border-[var(--border-main)] hover:bg-[var(--bg-card-subtle)] text-[var(--text-main)]'
-                }`}
-              >
-                <div className="min-w-0 pr-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold truncate">{qari.name}</span>
-                    {qari.isIndonesian && (
-                      <span className="text-[9px] bg-[#EAF8E8] text-[#228B22] px-1 py-0.2 rounded font-bold shrink-0">
-                        Indonesia
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-[var(--text-muted)] block mt-0.5">
-                    {qari.style || qari.country}
-                  </span>
-                  <span className="text-[10px] text-slate-400 block mt-1">
-                    Sumber: {qari.sourceName}
-                  </span>
-                </div>
-                {isSelected && <Check className="w-4 h-4 text-[#0EAAFC] shrink-0 mt-0.5" />}
-              </button>
-            );
-          })}
-        </div>
       </section>
 
-      {/* Group 3: Tilawah Target */}
-      <section className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border-main)] p-5 sm:p-6 space-y-4 shadow-sm card-interactive">
-        <h2 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-[#0EAAFC]" />
-          <span>Target Tilawah Harian</span>
-        </h2>
-        <p className="text-xs text-[var(--text-muted)]">
-          Tentukan berapa ayat yang ingin Anda baca setiap hari untuk istiqomah:
-        </p>
-
-        <div className="grid grid-cols-4 gap-2">
-          {[5, 10, 20, 50].map((target) => (
-            <button
-              key={target}
-              onClick={() => {
-                onUpdateSettings({ dailyTargetAyat: target });
-                toast.show(`Target tilawah diatur ke ${target} ayat/hari`);
-              }}
-              className={`py-2 text-xs font-semibold rounded-2xl border transition-all cursor-pointer active:scale-95 ${
-                settings.dailyTargetAyat === target
-                  ? 'border-[#43B433] bg-[#EAF8E8] text-[#228B22] font-bold shadow-xs'
-                  : 'border-[var(--border-main)] hover:bg-[var(--bg-card-subtle)] text-[var(--text-main)]'
-              }`}
-            >
-              {target} Ayat
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Group 4: PWA Installation */}
-      <section className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border-main)] p-5 sm:p-6 space-y-3 shadow-sm card-interactive">
-        <h2 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
-          <Download className="w-4 h-4 text-[#0EAAFC]" />
-          <span>Aplikasi Progressive Web App (PWA)</span>
-        </h2>
+      {/* 7. Local Data Management */}
+      <section className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 shadow-xs space-y-4">
+        <h3 className="text-sm font-bold text-[var(--text-main)]">
+          Pengelolaan Data Lokal
+        </h3>
         <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Pasang QuranMe langsung di layar ponsel atau desktop Anda agar dapat dibuka secara mandiri seperti aplikasi asli tanpa bilah browser.
-        </p>
-        <div className="pt-1">
-          <PWAInstallButton variant="settings" />
-        </div>
-      </section>
-
-      {/* Group 5: Data Storage & Reset */}
-      <section className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border-main)] p-5 sm:p-6 space-y-4 shadow-sm card-interactive">
-        <h2 className="text-sm font-bold text-red-600 flex items-center gap-2">
-          <Trash2 className="w-4 h-4 text-red-500" />
-          <span>Hapus Data Lokal & Reset</span>
-        </h2>
-        <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Semua catatan ayat, bookmark, riwayat membaca, dan cache surat tersimpan di penyimpanan lokal browser Anda. Menghapus data ini akan mengembalikan aplikasi ke kondisi awal.
+          Seluruh riwayat, bookmark, dan catatan disimpan di memori perangkat lokal Anda.
         </p>
 
         {!showResetConfirm ? (
           <button
+            type="button"
             onClick={() => setShowResetConfirm(true)}
-            className="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-2xl text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+            className="px-4 py-2.5 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
           >
-            Hapus Semua Data & Reset Pengaturan
+            <Trash2 className="w-4 h-4" />
+            <span>Reset Seluruh Data Lokal</span>
           </button>
         ) : (
-          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 space-y-3 text-xs">
-            <div className="flex items-center gap-2 text-red-700 font-bold">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>Konfirmasi Penghapusan Data</span>
+          <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 space-y-3">
+            <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-xs">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Konfirmasi Hapus Seluruh Data</span>
             </div>
-            <p className="text-red-600">
-              Apakah Anda yakin ingin menghapus seluruh bookmark, catatan tadabbur, dan riwayat tilawah? Tindakan ini tidak dapat dibatalkan.
+            <p className="text-[11px] text-red-600/80 dark:text-red-300">
+              Tindakan ini akan mengosongkan riwayat bacaan, bookmark, dan catatan pribadi Anda.
             </p>
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={handleReset}
-                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl cursor-pointer active:scale-95 transition-transform"
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer"
               >
-                Ya, Hapus Semua
+                Ya, Reset Sekarang
               </button>
               <button
+                type="button"
                 onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer active:scale-95 transition-transform"
+                className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 text-[var(--text-main)] text-xs font-bold border border-slate-200 cursor-pointer"
               >
                 Batal
               </button>
             </div>
           </div>
         )}
-      </section>
-
-      {/* Group 6: Brand & Data Verification Note */}
-      <section className="p-5 sm:p-6 rounded-3xl bg-[var(--bg-card-subtle)] border border-[var(--border-main)] text-xs text-[var(--text-muted)] space-y-2">
-        <div className="flex items-center gap-2 text-[var(--text-main)] font-bold">
-          <Info className="w-4 h-4 text-[#0EAAFC]" />
-          <span>Tentang {APP_CONFIG.appName}</span>
-        </div>
-        <p className="leading-relaxed">
-          {BRAND_IDENTITY.description}
-        </p>
-        <div className="pt-1 text-[11px] text-slate-400 space-y-0.5">
-          <p>• Teks Arab & Terjemahan: Mushaf Standar Indonesia Kemenag RI via equran.id API</p>
-          <p>• Audio Murottal: equran.id API & Internet Archive Indonesian Qari Collections</p>
-          <p>• Sumber Tafsir: Tafsir Lengkap Kemenag RI</p>
-          <p>• Versi Aplikasi: 3.1.0 Production Enhanced (Aurora & Motion)</p>
-        </div>
       </section>
     </div>
   );

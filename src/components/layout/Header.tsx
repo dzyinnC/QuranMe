@@ -1,16 +1,39 @@
 import React from 'react';
-import { BookOpen, Bookmark, Home, Moon, Palette, Search, Settings, Sparkles, Sun } from 'lucide-react';
+import {
+  BookOpen,
+  Bookmark,
+  Compass,
+  Headphones,
+  History,
+  Home,
+  Moon,
+  Palette,
+  Search,
+  Settings,
+  Sparkles,
+  Sun,
+} from 'lucide-react';
 import { PWAInstallButton } from '../common/PWAInstallButton';
 import { StorageService } from '../../services/storageService';
 import { ThemeBackground } from '../../types/quran';
 
-export type PageId = 'home' | 'surah-list' | 'reader' | 'search' | 'bookmarks' | 'settings';
+export type PageId =
+  | 'home'
+  | 'surah-list'
+  | 'reader'
+  | 'search'
+  | 'bookmarks'
+  | 'settings'
+  | 'ibadah'
+  | 'murottal'
+  | 'history';
 
 interface HeaderProps {
   currentPage: PageId;
   onNavigate: (page: PageId, surahNomor?: number, ayatNomor?: number) => void;
   theme?: ThemeBackground;
   onToggleTheme?: () => void;
+  onOpenThemeModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate,
   theme = 'light',
   onToggleTheme,
+  onOpenThemeModal,
 }) => {
   const lastRead = StorageService.getLastRead();
 
@@ -44,8 +68,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </button>
 
-        {/* Zone 2: Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--text-muted)]">
+        {/* Zone 2: Navigation Links (Desktop) */}
+        <nav className="hidden lg:flex items-center gap-5 text-sm font-medium text-[var(--text-muted)]">
           <button
             onClick={() => onNavigate('home')}
             className={`flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors py-1 ${
@@ -67,19 +91,31 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>Daftar Surat</span>
+            <span>Al-Qur'an</span>
           </button>
 
           <button
-            onClick={() => onNavigate('search')}
+            onClick={() => onNavigate('murottal')}
             className={`flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors py-1 ${
-              currentPage === 'search'
+              currentPage === 'murottal'
                 ? 'text-[#0EAAFC] font-semibold border-b-2 border-[#0EAAFC]'
                 : 'hover:text-[var(--text-main)]'
             }`}
           >
-            <Search className="w-4 h-4" />
-            <span>Pencarian</span>
+            <Headphones className="w-4 h-4" />
+            <span>Murottal</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('ibadah')}
+            className={`flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors py-1 ${
+              currentPage === 'ibadah'
+                ? 'text-[#0EAAFC] font-semibold border-b-2 border-[#0EAAFC]'
+                : 'hover:text-[var(--text-main)]'
+            }`}
+          >
+            <Compass className="w-4 h-4" />
+            <span>Ibadah & Doa</span>
           </button>
 
           <button
@@ -92,6 +128,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Bookmark className="w-4 h-4" />
             <span>Bookmark</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('history')}
+            className={`flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors py-1 ${
+              currentPage === 'history'
+                ? 'text-[#0EAAFC] font-semibold border-b-2 border-[#0EAAFC]'
+                : 'hover:text-[var(--text-main)]'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span>Riwayat</span>
           </button>
 
           <button
@@ -109,29 +157,28 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Zone 3: Quick Theme Switcher & Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Quick Theme Cycle Switcher */}
-          {onToggleTheme && (
-            <button
-              onClick={onToggleTheme}
-              className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-subtle)] transition-all cursor-pointer active:scale-95"
-              title={`Tema saat ini: ${
-                theme === 'light'
-                  ? 'Standard Light (Putih)'
-                  : theme === 'dark'
-                  ? 'Standard Dark (Hitam)'
-                  : 'Premium Gradient'
-              }. Klik untuk mengganti tema.`}
-              aria-label="Ganti tema background"
-            >
-              {theme === 'light' ? (
-                <Sun className="w-4 h-4 text-amber-500" />
-              ) : theme === 'dark' ? (
-                <Moon className="w-4 h-4 text-sky-400" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-emerald-500" />
-              )}
-            </button>
-          )}
+          {/* Theme Palette Button (Opens official Screen 10 Modal) */}
+          <button
+            onClick={onOpenThemeModal || onToggleTheme}
+            className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-subtle)] transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+            title={`Tema saat ini: ${
+              theme === 'light'
+                ? 'Standard Light'
+                : theme === 'dark'
+                ? 'Standard Dark'
+                : 'Premium Gradient'
+            }. Klik untuk memilih tema.`}
+            aria-label="Buka dialog pilih tema"
+          >
+            {theme === 'light' ? (
+              <Sun className="w-4 h-4 text-amber-500" />
+            ) : theme === 'dark' ? (
+              <Moon className="w-4 h-4 text-sky-400" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-[#43B433]" />
+            )}
+            <Palette className="w-3.5 h-3.5 opacity-60 hidden sm:inline" />
+          </button>
 
           <PWAInstallButton variant="header" />
 

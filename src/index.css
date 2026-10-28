@@ -124,48 +124,41 @@ html[data-theme="premium"] .aurora-container {
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  contain: strict;
 }
 
-/* Aurora Blob 1: Vibrant Sky Blue & Azure (#0EAAFC, #BFE8FF) */
+/* Aurora Blob 1: Soft Sky Blue & Azure (#0EAAFC, #BFE8FF) — GPU Composited */
 .aurora-blob-1 {
   position: absolute;
-  top: -12%;
-  left: -8%;
-  width: 68vw;
-  height: 62vh;
+  top: -10%;
+  left: -6%;
+  width: 74vw;
+  height: 68vh;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(14, 170, 252, 0.38) 0%, rgba(191, 232, 255, 0.32) 45%, transparent 72%);
-  filter: blur(60px);
-  animation: aurora-drift-1 18s ease-in-out infinite alternate;
-  will-change: transform, opacity;
+  background: radial-gradient(circle at 40% 40%, rgba(14, 170, 252, 0.36) 0%, rgba(191, 232, 255, 0.28) 42%, transparent 72%);
+  filter: blur(38px);
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform;
+  contain: layout paint;
+  animation: aurora-drift-1 20s ease-in-out infinite alternate;
 }
 
-/* Aurora Blob 2: Fresh Mint & Emerald Green (#43B433, #DDF5E5, #D8F7F1) */
+/* Aurora Blob 2: Fresh Mint & Emerald Green (#43B433, #DDF5E5) — GPU Composited */
 .aurora-blob-2 {
   position: absolute;
-  bottom: -15%;
-  right: -10%;
-  width: 72vw;
-  height: 65vh;
+  bottom: -12%;
+  right: -8%;
+  width: 78vw;
+  height: 70vh;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(67, 180, 51, 0.32) 0%, rgba(216, 247, 241, 0.40) 50%, transparent 72%);
-  filter: blur(65px);
-  animation: aurora-drift-2 22s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-}
-
-/* Aurora Blob 3: Center Aqua Mist / Luminous Cyan (#38BDF8, #E0F2FE) */
-.aurora-blob-3 {
-  position: absolute;
-  top: 35%;
-  left: 20%;
-  width: 58vw;
-  height: 50vh;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(14, 170, 252, 0.26) 0%, rgba(67, 180, 51, 0.20) 45%, transparent 70%);
-  filter: blur(55px);
-  animation: aurora-drift-3 16s ease-in-out infinite alternate;
-  will-change: transform, opacity;
+  background: radial-gradient(circle at 60% 60%, rgba(67, 180, 51, 0.30) 0%, rgba(216, 247, 241, 0.32) 46%, transparent 72%);
+  filter: blur(40px);
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform;
+  contain: layout paint;
+  animation: aurora-drift-2 24s ease-in-out infinite alternate;
 }
 
 .aurora-overlay {
@@ -174,51 +167,31 @@ html[data-theme="premium"] .aurora-container {
   background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
   background-size: 32px 32px;
   opacity: 0.25;
+  pointer-events: none;
 }
 
-/* Organic Ambient Aurora Keyframes (GPU-accelerated transform & opacity) */
+/* Pure GPU-composited Transform Keyframes (Zero paint recalculation, zero opacity thrashing) */
 @keyframes aurora-drift-1 {
   0% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
-    opacity: 0.85;
   }
   50% {
-    transform: translate3d(5vw, 6vh, 0) scale(1.12) rotate(6deg);
-    opacity: 1;
+    transform: translate3d(5vw, 6vh, 0) scale(1.10) rotate(5deg);
   }
   100% {
-    transform: translate3d(-3vw, 4vh, 0) scale(0.96) rotate(-4deg);
-    opacity: 0.88;
+    transform: translate3d(-3vw, 4vh, 0) scale(0.96) rotate(-3deg);
   }
 }
 
 @keyframes aurora-drift-2 {
   0% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
-    opacity: 0.82;
   }
   50% {
-    transform: translate3d(-6vw, -5vh, 0) scale(1.10) rotate(-6deg);
-    opacity: 0.98;
+    transform: translate3d(-6vw, -5vh, 0) scale(1.08) rotate(-5deg);
   }
   100% {
-    transform: translate3d(4vw, -3vh, 0) scale(0.94) rotate(4deg);
-    opacity: 0.80;
-  }
-}
-
-@keyframes aurora-drift-3 {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.70;
-  }
-  50% {
-    transform: translate3d(4vw, -4vh, 0) scale(1.15);
-    opacity: 0.92;
-  }
-  100% {
-    transform: translate3d(-4vw, 3vh, 0) scale(0.92);
-    opacity: 0.75;
+    transform: translate3d(4vw, -3vh, 0) scale(0.95) rotate(4deg);
   }
 }
 
@@ -283,8 +256,7 @@ button:active:not(:disabled) {
     scroll-behavior: auto !important;
   }
   .aurora-blob-1,
-  .aurora-blob-2,
-  .aurora-blob-3 {
+  .aurora-blob-2 {
     animation: none !important;
   }
 }

@@ -104,12 +104,12 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
     return (
       <article
         id={`ayat-${verse.nomorAyat}`}
-        className={`p-4 sm:p-6 rounded-2xl border transition-all duration-200 ${
+        className={`p-4 sm:p-6 rounded-2xl border transition-all duration-200 card-interactive shadow-xs ${
           isPlaying
             ? 'bg-[#E8F6FF]/70 border-[#0EAAFC] shadow-sm ring-2 ring-[#0EAAFC]/30'
             : isCompletedToday
             ? 'bg-[var(--bg-card)] border-[#43B433]/50 shadow-2xs'
-            : 'bg-[var(--bg-card)] border-[var(--border-main)] hover:border-slate-300'
+            : 'bg-[var(--bg-card)] border-[var(--border-main)] hover:border-[#0EAAFC]/50'
         }`}
       >
         {/* Top action & reference bar */}
@@ -274,6 +274,57 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
             {verse.teksIndonesia}
           </div>
         )}
+
+        {/* Action Toolbar Pills (Salin | Bookmark | Bagikan | Tafsir) matching Reference Screen 3 */}
+        <div className="pt-4 mt-3 border-t border-[var(--border-subtle)] flex items-center justify-between sm:justify-start gap-2 sm:gap-3 flex-wrap">
+          {/* Salin Button */}
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-card-subtle)] hover:bg-[var(--border-main)] transition-colors cursor-pointer active:scale-95"
+            aria-label="Salin ayat"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copied ? 'Tersalin' : 'Salin'}</span>
+          </button>
+
+          {/* Bookmark Button */}
+          <button
+            type="button"
+            onClick={handleBookmark}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer active:scale-95 ${
+              isBookmarked
+                ? 'bg-[#E8F6FF] text-[#0EAAFC]'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-card-subtle)] hover:bg-[var(--border-main)]'
+            }`}
+            aria-label="Bookmark ayat"
+          >
+            <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#0EAAFC]' : ''}`} />
+            <span>Bookmark</span>
+          </button>
+
+          {/* Bagikan Button */}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-card-subtle)] hover:bg-[var(--border-main)] transition-colors cursor-pointer active:scale-95"
+            aria-label="Bagikan ayat"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>Bagikan</span>
+          </button>
+
+          {/* Tafsir Button */}
+          <button
+            type="button"
+            onClick={() => onOpenTafsir(verse.nomorAyat)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#43B433] bg-[#EAF7EE] hover:bg-[#d8f0dd] transition-colors cursor-pointer active:scale-95"
+            aria-label="Buka tafsir"
+          >
+            <BookMarked className="w-3.5 h-3.5" />
+            <span>Tafsir</span>
+          </button>
+        </div>
 
         {/* Personal Note Callout if present */}
         {noteText && (

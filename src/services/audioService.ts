@@ -298,6 +298,10 @@ class AudioPlayerManager {
     }
   }
 
+  public togglePlay() {
+    this.togglePlayPause();
+  }
+
   public seek(seconds: number) {
     if (!this.audio) return;
     this.audio.currentTime = seconds;
