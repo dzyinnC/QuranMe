@@ -13,6 +13,7 @@ import {
   Search,
   Sparkles,
   Target,
+  User,
   Volume2,
 } from 'lucide-react';
 import {
@@ -24,6 +25,7 @@ import {
 import { PageId } from '../components/layout/Header';
 import { BRAND_IDENTITY } from '../config/appConfig';
 import { audioService } from '../services/audioService';
+import { authService, UserProfile } from '../services/authService';
 import { StorageService } from '../services/storageService';
 import { LastReadPosition, UserSettings } from '../types/quran';
 
@@ -37,6 +39,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, settings, onOpen
   const lastRead: LastReadPosition | null = StorageService.getLastRead();
   const [todayAyatCount, setTodayAyatCount] = useState<number>(StorageService.getTodayAyatCount());
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(audioService.state.isPlaying);
+  const [user, setUser] = useState<UserProfile | null>(authService.getCurrentUser());
   const dailyTarget = settings.dailyTargetAyat || 20;
 
   // Sync Tilawah Progress across tabs and reader
@@ -46,6 +49,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, settings, onOpen
     };
     window.addEventListener('quranme_tilawah_updated', handleUpdate);
     return () => window.removeEventListener('quranme_tilawah_updated', handleUpdate);
+  }, []);
+
+  // Sync auth state
+  useEffect(() => {
+    return authService.subscribe((u) => {
+      setUser(u);
+    });
   }, []);
 
   // Sync audio play state
@@ -67,6 +77,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, settings, onOpen
     if (hour >= 15 && hour < 18) return 'Selamat Sore';
     return 'Selamat Malam';
   }, []);
+
+  const displayName = user?.nama || user?.name || 'Ahmad';
 
   const handleToggleMurottal = () => {
     if (audioService.state.surahNomor) {
@@ -95,10 +107,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, settings, onOpen
                 {greeting}
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-[#43B433]" />
-              <span className="text-xs text-[var(--text-muted)]">Ahmad</span>
+              <span className="text-xs text-[var(--text-muted)]">{displayName}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-main)] tracking-tight">
-              Assalamu'alaikum, Ahmad
+              Assalamu'alaikum, {displayName}
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-muted)] font-medium">
               Semoga hari ini penuh keberkahan
@@ -107,12 +119,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, settings, onOpen
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onNavigate('settings')}
-              className="w-10 h-10 rounded-full bg-[var(--bg-card-subtle)] hover:bg-[var(--border-main)] text-[var(--text-muted)] hover:text-[var(--text-main)] flex items-center justify-center transition-colors cursor-pointer"
-              title="Pengaturan Profil"
-              aria-label="Buka Pengaturan"
+              onClick={() => onNavigate('profile')}
+              className="w-11 h-11 rounded-2xl bg-[var(--bg-card-subtle)] hover:bg-[var(--border-main)] text-[var(--text-muted)] hover:text-[#0EAAFC] flex items-center justify-center transition-all cursor-pointer border border-[var(--border-main)] hover:border-[#0EAAFC]/50 group"
+              title="Profil & Pengaturan Akun"
+              aria-label="Buka Profil Pengguna"
             >
-              <Bell className="w-5 h-5" />
+              <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </button>
           </div>
         </div>

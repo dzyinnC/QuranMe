@@ -17,6 +17,9 @@ import { SearchPage } from './pages/SearchPage';
 import { BookmarksPage } from './pages/BookmarksPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { IbadahPage } from './pages/IbadahPage';
+import { QiblaPage } from './pages/QiblaPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { TajweedEducationPage } from './pages/TajweedEducationPage';
 import { MurottalPage } from './pages/MurottalPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { StorageService } from './services/storageService';
@@ -130,6 +133,7 @@ export default function App() {
             onSelectSurah={(surahNum, ayatNum = 1) => {
               handleNavigate('reader', surahNum, ayatNum);
             }}
+            onOpenTajweedEdu={() => handleNavigate('tajweed-edu')}
           />
         )}
 
@@ -142,8 +146,17 @@ export default function App() {
               handleNavigate('reader', surahNum, ayatNum);
             }}
             onBackToList={() => setCurrentPage('surah-list')}
+            onOpenTajweedEdu={() => handleNavigate('tajweed-edu')}
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
+          />
+        )}
+
+        {/* Layar Tambahan — Pusat Belajar Tajwid & Waqaf */}
+        {currentPage === 'tajweed-edu' && (
+          <TajweedEducationPage
+            onBack={() => handleNavigate('surah-list')}
+            onOpenSurah={(sNum) => handleNavigate('reader', sNum, 1)}
           />
         )}
 
@@ -161,6 +174,24 @@ export default function App() {
         {currentPage === 'ibadah' && (
           <IbadahPage
             onBack={() => handleNavigate('home')}
+          />
+        )}
+
+        {/* Layar Tambahan — Arah Kiblat (Menu Utama #4) */}
+        {currentPage === 'qibla' && (
+          <QiblaPage
+            onNavigateHome={() => handleNavigate('home')}
+          />
+        )}
+
+        {/* Layar Tambahan — Profil Pengguna & Pusat Akun/Pengaturan */}
+        {(currentPage === 'profile' || currentPage === 'settings') && (
+          <ProfilePage
+            onNavigate={(p, s, a) => handleNavigate(p, s, a)}
+            settings={settings}
+            onUpdateSettings={handleUpdateSettings}
+            onResetAllData={handleResetAllData}
+            onOpenThemeModal={() => setIsThemeModalOpen(true)}
           />
         )}
 
@@ -190,16 +221,6 @@ export default function App() {
               handleNavigate('reader', sNum, aNum);
             }}
             onBack={() => handleNavigate('home')}
-          />
-        )}
-
-        {/* Layar 9 — Pengaturan */}
-        {currentPage === 'settings' && (
-          <SettingsPage
-            settings={settings}
-            onUpdateSettings={handleUpdateSettings}
-            onResetAllData={handleResetAllData}
-            onOpenThemeModal={() => setIsThemeModalOpen(true)}
           />
         )}
       </main>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Bookmark, Compass, Home, User } from 'lucide-react';
+import { BookOpen, Bookmark, Compass, Home, Sparkles, User } from 'lucide-react';
 import { PageId } from './Header';
 
 interface BottomNavProps {
@@ -11,17 +11,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentPage, onNavigate })
   const navItems = [
     { id: 'home' as PageId, label: 'Beranda', icon: Home },
     { id: 'surah-list' as PageId, label: "Al-Qur'an", icon: BookOpen },
-    { id: 'ibadah' as PageId, label: 'Ibadah', icon: Compass },
-    { id: 'bookmarks' as PageId, label: 'Bookmark', icon: Bookmark },
-    { id: 'settings' as PageId, label: 'Profil', icon: User },
+    { id: 'ibadah' as PageId, label: 'Ibadah', icon: Sparkles },
+    { id: 'qibla' as PageId, label: 'Arah Kiblat', icon: Compass },
   ];
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--nav-bg)] border-t border-[var(--border-main)] px-2 py-1.5 pb-[max(env(safe-area-inset-bottom),0.5rem)] transition-colors duration-150 backdrop-blur-md"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--nav-bg)] border-t border-[var(--border-main)] px-3 py-1.5 pb-[max(env(safe-area-inset-bottom),0.5rem)] transition-colors duration-150 backdrop-blur-md"
       aria-label="Navigasi Bawah"
     >
-      <div className="grid grid-cols-5 items-center justify-around">
+      <div className="grid grid-cols-4 items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =

@@ -9,8 +9,14 @@ import {
   Pause,
   Play,
   Share2,
+  Sparkles,
 } from 'lucide-react';
 import { audioService } from '../../services/audioService';
+import {
+  TajweedRuleInfo,
+  TajweedToken,
+  WAQAF_MARKERS,
+} from '../../services/tajweedService';
 import { AyatItem } from '../../types/quran';
 import { toast } from '../common/Toast';
 
@@ -32,6 +38,15 @@ interface VerseCardProps {
   onOpenNote: (ayatNomor: number) => void;
   noteText?: string;
   isPlaying?: boolean;
+  // Tajweed enhancements
+  tajweedTokens?: TajweedToken[];
+  showTajweedColors?: boolean;
+  onSelectTajweedRule?: (rule: TajweedRuleInfo, tokenText: string) => void;
+  onSelectWaqafMarker?: (
+    marker: string,
+    info: { name: string; meaning: string; advice: string }
+  ) => void;
+  onOpenTajweedSheet?: (ayatNomor: number) => void;
 }
 
 export const VerseCard: React.FC<VerseCardProps> = memo(
@@ -52,6 +67,11 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
     onOpenNote,
     noteText,
     isPlaying = false,
+    tajweedTokens,
+    showTajweedColors = true,
+    onSelectTajweedRule,
+    onSelectWaqafMarker,
+    onOpenTajweedSheet,
   }) => {
     const [copied, setCopied] = useState(false);
 
@@ -101,6 +121,76 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
       );
     };
 
+    // Render Arabic Text: either with tajweed tokens or pristine standard Arabic
+    const renderArabicContent = () => {
+      if (showTajweedColors && tajweedTokens && tajweedTokens.length > 0) {
+        return (
+          <p
+            lang="ar"
+            dir="rtl"
+            className="font-arabic text-[var(--text-main)] text-right leading-[2.5] tracking-wide select-text"
+            style={{ fontSize: `${arabicFontSize}px` }}
+          >
+            {tajweedTokens.map((token, idx) => {
+              // 1. Tagged Tajweed segment with rule
+              if (token.rule) {
+                return (
+                  <span
+                    key={idx}
+                    onClick={() => {
+                      if (onSelectTajweedRule) {
+                        onSelectTajweedRule(token.rule!, token.text);
+                      }
+                    }}
+                    className="cursor-pointer font-bold px-0.5 rounded transition-all hover:scale-105 inline-block mx-0.5"
+                    style={{
+                      color: token.rule.textColor,
+                      backgroundColor: token.rule.bgColor,
+                      borderBottom: `2px solid ${token.rule.borderColor}`,
+                    }}
+                    title={`${token.rule.name} - Klik untuk mempelajari kaidah`}
+                  >
+                    {token.text}
+                  </span>
+                );
+              }
+
+              // 2. End of verse indicator
+              if (token.className === 'end') {
+                return (
+                  <span
+                    key={idx}
+                    className="text-[#0EAAFC] font-mono px-1 font-bold inline-block text-sm"
+                  >
+                    {token.text}
+                  </span>
+                );
+              }
+
+              // 3. Plain token: Check for Waqaf symbols
+              return (
+                <span key={idx} className="inline">
+                  {token.text}
+                </span>
+              );
+            })}
+          </p>
+        );
+      }
+
+      // Default Standard Arabic text without annotations
+      return (
+        <p
+          lang="ar"
+          dir="rtl"
+          className="font-arabic text-[var(--text-main)] text-right leading-[2.3] tracking-wide"
+          style={{ fontSize: `${arabicFontSize}px` }}
+        >
+          {verse.teksArab}
+        </p>
+      );
+    };
+
     return (
       <article
         id={`ayat-${verse.nomorAyat}`}
@@ -143,9 +233,18 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
             {/* Audio Wave Playing Indicator */}
             {isPlaying && (
               <div className="flex items-end gap-0.5 h-3.5 px-1 ml-1" title="Sedang diputar">
-                <span className="w-0.5 h-2 bg-[#0EAAFC] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-0.5 h-3.5 bg-[#0EAAFC] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-0.5 h-2.5 bg-[#0EAAFC] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span
+                  className="w-0.5 h-2 bg-[#0EAAFC] rounded-full animate-bounce"
+                  style={{ animationDelay: '0ms' }}
+                />
+                <span
+                  className="w-0.5 h-3.5 bg-[#0EAAFC] rounded-full animate-bounce"
+                  style={{ animationDelay: '150ms' }}
+                />
+                <span
+                  className="w-0.5 h-2.5 bg-[#0EAAFC] rounded-full animate-bounce"
+                  style={{ animationDelay: '300ms' }}
+                />
               </div>
             )}
           </div>
@@ -161,7 +260,11 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
                     ? 'bg-[#EAF8E8] text-[#228B22] hover:bg-[#EAF8E8]/80'
                     : 'hover:bg-[var(--bg-card-subtle)] hover:text-[#43B433]'
                 }`}
-                title={isCompletedToday ? 'Batalkan tanda selesai hari ini' : 'Tandai selesai dibaca hari ini'}
+                title={
+                  isCompletedToday
+                    ? 'Batalkan tanda selesai hari ini'
+                    : 'Tandai selesai dibaca hari ini'
+                }
                 aria-label={isCompletedToday ? 'Batalkan tanda selesai' : 'Tandai selesai'}
               >
                 <CheckCircle2
@@ -205,9 +308,7 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
               title={isBookmarked ? 'Hapus dari Bookmark' : 'Simpan ke Bookmark'}
               aria-label={isBookmarked ? 'Hapus bookmark' : 'Simpan bookmark'}
             >
-              <Bookmark
-                className={`w-4 h-4 ${isBookmarked ? 'fill-[#0EAAFC]' : ''}`}
-              />
+              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#0EAAFC]' : ''}`} />
             </button>
 
             {/* Note */}
@@ -246,17 +347,8 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
           </div>
         </div>
 
-        {/* Arabic Text (dir="rtl" and lang="ar") */}
-        <div className="py-2.5">
-          <p
-            lang="ar"
-            dir="rtl"
-            className="font-arabic text-[var(--text-main)] text-right leading-[2.3] tracking-wide"
-            style={{ fontSize: `${arabicFontSize}px` }}
-          >
-            {verse.teksArab}
-          </p>
-        </div>
+        {/* Arabic Text (dir="rtl" and lang="ar") with Tajweed colors or standard view */}
+        <div className="py-2.5">{renderArabicContent()}</div>
 
         {/* Transliteration (Latin) */}
         {showLatin && verse.teksLatin && (
@@ -275,7 +367,7 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
           </div>
         )}
 
-        {/* Action Toolbar Pills (Salin | Bookmark | Bagikan | Tafsir) matching Reference Screen 3 */}
+        {/* Action Toolbar Pills (Salin | Bookmark | Bagikan | Tafsir | Tajwid) */}
         <div className="pt-4 mt-3 border-t border-[var(--border-subtle)] flex items-center justify-between sm:justify-start gap-2 sm:gap-3 flex-wrap">
           {/* Salin Button */}
           <button
@@ -284,7 +376,11 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-card-subtle)] hover:bg-[var(--border-main)] transition-colors cursor-pointer active:scale-95"
             aria-label="Salin ayat"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
             <span>{copied ? 'Tersalin' : 'Salin'}</span>
           </button>
 
@@ -324,6 +420,19 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
             <BookMarked className="w-3.5 h-3.5" />
             <span>Tafsir</span>
           </button>
+
+          {/* Tajweed Explanation Button */}
+          {onOpenTajweedSheet && (
+            <button
+              type="button"
+              onClick={() => onOpenTajweedSheet(verse.nomorAyat)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#0EAAFC] bg-[#E8F6FF] hover:bg-[#d9effd] transition-colors cursor-pointer active:scale-95 border border-[#0EAAFC]/30"
+              aria-label="Buka rincian tajwid ayat ini"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Tajwid</span>
+            </button>
+          )}
         </div>
 
         {/* Personal Note Callout if present */}
@@ -352,7 +461,9 @@ export const VerseCard: React.FC<VerseCardProps> = memo(
       prev.arabicFontSize === next.arabicFontSize &&
       prev.translationFontSize === next.translationFontSize &&
       prev.showLatin === next.showLatin &&
-      prev.showTranslation === next.showTranslation
+      prev.showTranslation === next.showTranslation &&
+      prev.showTajweedColors === next.showTajweedColors &&
+      prev.tajweedTokens === next.tajweedTokens
     );
   }
 );

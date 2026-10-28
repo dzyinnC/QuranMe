@@ -19,9 +19,14 @@ import { SurahItem } from '../types/quran';
 interface SurahListPageProps {
   onSelectSurah: (nomor: number, ayatNomor?: number) => void;
   onBack?: () => void;
+  onOpenTajweedEdu?: () => void;
 }
 
-export const SurahListPage: React.FC<SurahListPageProps> = ({ onSelectSurah, onBack }) => {
+export const SurahListPage: React.FC<SurahListPageProps> = ({
+  onSelectSurah,
+  onBack,
+  onOpenTajweedEdu,
+}) => {
   const [surahs, setSurahs] = useState<SurahItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -164,6 +169,34 @@ export const SurahListPage: React.FC<SurahListPageProps> = ({ onSelectSurah, onB
           Madaniyah
         </button>
       </div>
+
+      {/* Educational Banner: Pusat Belajar Tajwid & Waqaf */}
+      {onOpenTajweedEdu && (
+        <div
+          onClick={onOpenTajweedEdu}
+          className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-[#0EAAFC]/10 via-[var(--bg-card)] to-[#43B433]/10 border border-[#0EAAFC]/30 hover:border-[#0EAAFC] transition-all cursor-pointer card-interactive shadow-xs group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#0EAAFC] to-[#43B433] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-bold text-[var(--text-main)] group-hover:text-[#0EAAFC] transition-colors">
+                  Pusat Belajar Tajwid & Waqaf
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EAF7EE] text-[#43B433]">
+                  15 Bab Lengkap
+                </span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                Kaidah makhraj, sifat huruf, tanda waqaf Kemenag RI, & kuis latihan interaktif.
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#0EAAFC] group-hover:translate-x-1 transition-all" />
+        </div>
+      )}
 
       {/* 4. Surah List Content */}
       {isLoading ? (

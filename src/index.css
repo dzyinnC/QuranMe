@@ -60,21 +60,21 @@ html[data-theme="dark"] {
 
 /* 3. PREMIUM GRADIENT: "Soft Magical Aurora" with Sky Blue, Aqua & Mint Green */
 html[data-theme="premium"] {
-  --bg-app: #EEF7FC;
-  --bg-card: rgba(255, 255, 255, 0.84);
-  --bg-card-subtle: rgba(240, 248, 255, 0.74);
-  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --bg-app: transparent;
+  --bg-card: rgba(255, 255, 255, 0.78);
+  --bg-card-subtle: rgba(240, 249, 255, 0.65);
+  --bg-card-hover: rgba(255, 255, 255, 0.92);
   --text-main: #1A202C;
   --text-muted: #4A5568;
-  --border-main: rgba(14, 170, 252, 0.24);
-  --border-subtle: rgba(14, 170, 252, 0.14);
-  --badge-blue-bg: rgba(14, 170, 252, 0.14);
+  --border-main: rgba(14, 170, 252, 0.32);
+  --border-subtle: rgba(67, 180, 51, 0.22);
+  --badge-blue-bg: rgba(14, 170, 252, 0.16);
   --badge-blue-text: #0877B9;
-  --badge-green-bg: rgba(67, 180, 51, 0.14);
+  --badge-green-bg: rgba(67, 180, 51, 0.16);
   --badge-green-text: #228B22;
   --nav-bg: rgba(255, 255, 255, 0.88);
-  --header-bg: rgba(255, 255, 255, 0.86);
-  --card-shadow: 0 8px 32px -4px rgba(14, 170, 252, 0.14), 0 4px 14px -2px rgba(67, 180, 51, 0.08);
+  --header-bg: rgba(255, 255, 255, 0.88);
+  --card-shadow: 0 10px 32px -4px rgba(14, 170, 252, 0.22), 0 6px 18px -2px rgba(67, 180, 51, 0.16);
 }
 
 /* Base Body Styles */
@@ -87,24 +87,24 @@ body {
   position: relative;
 }
 
-/* Premium Gradient Base Flow on Body */
+/* Premium Gradient Base Flow on Body (Rich Sky Blue & Mint Green) */
 html[data-theme="premium"] body {
-  background: linear-gradient(145deg, #E6F5FC 0%, #EFFCF4 45%, #F5FBFE 100%);
+  background: linear-gradient(135deg, #BFE8FF 0%, #D8F7F1 32%, #DDF5E5 68%, #B8F0C8 100%);
   background-attachment: fixed;
 }
 
 /* Glassmorphism automatically applied to cards in Premium Mode */
 html[data-theme="premium"] .bg-\[var\(--bg-card\)\] {
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 html[data-theme="premium"] header {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 html[data-theme="premium"] nav[aria-label="Navigasi Bawah"] {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 /* =========================================================================
@@ -127,59 +127,59 @@ html[data-theme="premium"] .aurora-container {
   contain: strict;
 }
 
-/* Aurora Blob 1: Soft Sky Blue & Azure (#0EAAFC, #BFE8FF) — GPU Composited */
+/* Aurora Blob 1: Vibrant Sky Blue & Azure (#0EAAFC, #8DD8FF) — GPU Composited */
 .aurora-blob-1 {
   position: absolute;
-  top: -10%;
-  left: -6%;
-  width: 74vw;
-  height: 68vh;
+  top: -12%;
+  left: -8%;
+  width: 84vw;
+  height: 76vh;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, rgba(14, 170, 252, 0.36) 0%, rgba(191, 232, 255, 0.28) 42%, transparent 72%);
-  filter: blur(38px);
+  background: radial-gradient(circle at 40% 40%, rgba(14, 170, 252, 0.58) 0%, rgba(141, 216, 255, 0.44) 36%, rgba(191, 232, 255, 0.22) 58%, transparent 75%);
+  filter: blur(44px);
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   will-change: transform;
   contain: layout paint;
-  animation: aurora-drift-1 20s ease-in-out infinite alternate;
+  animation: aurora-drift-1 18s ease-in-out infinite alternate;
 }
 
-/* Aurora Blob 2: Fresh Mint & Emerald Green (#43B433, #DDF5E5) — GPU Composited */
+/* Aurora Blob 2: Fresh Mint & Emerald Green (#43B433, #B8F0C8, #D2F5D8) — GPU Composited */
 .aurora-blob-2 {
   position: absolute;
-  bottom: -12%;
-  right: -8%;
-  width: 78vw;
-  height: 70vh;
+  bottom: -14%;
+  right: -10%;
+  width: 88vw;
+  height: 80vh;
   border-radius: 50%;
-  background: radial-gradient(circle at 60% 60%, rgba(67, 180, 51, 0.30) 0%, rgba(216, 247, 241, 0.32) 46%, transparent 72%);
-  filter: blur(40px);
+  background: radial-gradient(circle at 60% 60%, rgba(67, 180, 51, 0.52) 0%, rgba(184, 240, 200, 0.45) 36%, rgba(210, 245, 216, 0.22) 58%, transparent 75%);
+  filter: blur(46px);
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   will-change: transform;
   contain: layout paint;
-  animation: aurora-drift-2 24s ease-in-out infinite alternate;
+  animation: aurora-drift-2 22s ease-in-out infinite alternate;
 }
 
 .aurora-overlay {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.55) 1.2px, transparent 1.2px);
   background-size: 32px 32px;
-  opacity: 0.25;
+  opacity: 0.30;
   pointer-events: none;
 }
 
-/* Pure GPU-composited Transform Keyframes (Zero paint recalculation, zero opacity thrashing) */
+/* Pure GPU-composited Transform Keyframes (Zero paint recalculation, smooth ambient motion) */
 @keyframes aurora-drift-1 {
   0% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
   50% {
-    transform: translate3d(5vw, 6vh, 0) scale(1.10) rotate(5deg);
+    transform: translate3d(6vw, 7vh, 0) scale(1.12) rotate(6deg);
   }
   100% {
-    transform: translate3d(-3vw, 4vh, 0) scale(0.96) rotate(-3deg);
+    transform: translate3d(-4vw, 5vh, 0) scale(0.95) rotate(-4deg);
   }
 }
 
@@ -188,10 +188,10 @@ html[data-theme="premium"] .aurora-container {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
   50% {
-    transform: translate3d(-6vw, -5vh, 0) scale(1.08) rotate(-5deg);
+    transform: translate3d(-7vw, -6vh, 0) scale(1.10) rotate(-6deg);
   }
   100% {
-    transform: translate3d(4vw, -3vh, 0) scale(0.95) rotate(4deg);
+    transform: translate3d(5vw, -4vh, 0) scale(0.94) rotate(5deg);
   }
 }
 

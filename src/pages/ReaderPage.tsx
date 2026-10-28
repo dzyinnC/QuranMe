@@ -12,8 +12,10 @@ import {
   ListFilter,
   Loader2,
   Play,
+  Palette,
   RotateCcw,
   Sliders,
+  Sparkles,
   Type,
   Volume2,
 } from 'lucide-react';
@@ -21,10 +23,17 @@ import { ALL_QARI, INDONESIAN_QARI, INTERNATIONAL_QARI, QariSource } from '../co
 import { AudioState, audioService } from '../services/audioService';
 import { QuranApiService } from '../services/quranApi';
 import { StorageService } from '../services/storageService';
+import {
+  TAJWEED_RULES,
+  TajweedRuleInfo,
+  TajweedService,
+  TajweedToken,
+} from '../services/tajweedService';
 import { AyatItem, SurahDetail, UserSettings } from '../types/quran';
 import { AutoScrollController } from '../components/quran/AutoScrollController';
 import { NoteModal } from '../components/quran/NoteModal';
 import { TafsirModal } from '../components/quran/TafsirModal';
+import { TajweedModal } from '../components/quran/TajweedModal';
 import { VerseCard } from '../components/quran/VerseCard';
 import { toast } from '../components/common/Toast';
 
@@ -33,6 +42,7 @@ interface ReaderPageProps {
   initialAyatNomor?: number;
   onNavigateSurah: (nomor: number, ayatNomor?: number) => void;
   onBackToList: () => void;
+  onOpenTajweedEdu?: () => void;
   settings: UserSettings;
   onUpdateSettings: (newSettings: Partial<UserSettings>) => void;
 }
@@ -44,6 +54,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
   initialAyatNomor = 1,
   onNavigateSurah,
   onBackToList,
+  onOpenTajweedEdu,
   settings,
   onUpdateSettings,
 }) => {
@@ -54,6 +65,15 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
   const [showInfo, setShowInfo] = useState<boolean>(false);
   const [showAppearanceMenu, setShowAppearanceMenu] = useState<boolean>(false);
   const [showQariMenu, setShowQariMenu] = useState<boolean>(false);
+
+  // Tajweed state
+  const [tajweedMap, setTajweedMap] = useState<Map<number, TajweedToken[]>>(new Map());
+  const [showTajweedColors, setShowTajweedColors] = useState<boolean>(true);
+  const [showTajweedLegend, setShowTajweedLegend] = useState<boolean>(false);
+  const [isTajweedModalOpen, setIsTajweedModalOpen] = useState<boolean>(false);
+  const [selectedTajweedRule, setSelectedTajweedRule] = useState<TajweedRuleInfo | null>(null);
+  const [selectedTajweedTokenText, setSelectedTajweedTokenText] = useState<string>('');
+  const [selectedTajweedAyatNomor, setSelectedTajweedAyatNomor] = useState<number>(1);
 
   // Progressive rendering limit for long surahs
   const [visibleCount, setVisibleCount] = useState<number>(BATCH_SIZE);
@@ -165,6 +185,21 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
           setError(err.message || 'Gagal memuat detail surat');
           setIsLoading(false);
         }
+      });
+
+    // Fetch word/segment level Tajweed metadata from Quran.com API v4
+    TajweedService.getSurahTajweed(surahNomor)
+      .then((tajweedVerses) => {
+        if (isMounted) {
+          const map = new Map<number, TajweedToken[]>();
+          for (const v of tajweedVerses) {
+            map.set(v.ayatNomor, v.tokens);
+          }
+          setTajweedMap(map);
+        }
+      })
+      .catch((err) => {
+        console.warn('Tajweed metadata fetch fallback:', err);
       });
 
     return () => {
@@ -585,6 +620,90 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
             )}
           </div>
 
+          {/* Interactive Tajweed Mode Strip */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-main)] shadow-xs">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#0EAAFC]" />
+              <span className="text-xs font-bold text-[var(--text-main)]">Mode Tajwid:</span>
+              <div className="inline-flex rounded-xl bg-[var(--bg-card-subtle)] p-1 border border-[var(--border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setShowTajweedColors(true)}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    showTajweedColors
+                      ? 'bg-[#0EAAFC] text-white shadow-2xs'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  Berwarna
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTajweedColors(false)}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    !showTajweedColors
+                      ? 'bg-[var(--bg-card)] text-[var(--text-main)] shadow-2xs'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  Teks Standar
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowTajweedLegend(!showTajweedLegend)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#0877B9] bg-[#E8F6FF] hover:bg-[#d9effd] transition-colors cursor-pointer border border-[#0EAAFC]/30"
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span>{showTajweedLegend ? 'Tutup Legenda' : 'Legenda Warna'}</span>
+              </button>
+
+              {onOpenTajweedEdu && (
+                <button
+                  type="button"
+                  onClick={onOpenTajweedEdu}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#43B433] bg-[#EAF7EE] hover:bg-[#d8f0dd] transition-colors cursor-pointer border border-[#43B433]/30"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Pusat Belajar Tajwid</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Tajweed Color Legend Strip if expanded */}
+          {showTajweedLegend && (
+            <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-main)] shadow-xs animate-in fade-in duration-150 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+                <span className="text-xs font-bold text-[var(--text-main)]">
+                  Legenda Warna Hukum Tajwid (Hafs 'an 'Asim)
+                </span>
+                <span className="text-[11px] text-[var(--text-muted)]">Sentuh kata berwarna untuk membaca kaidah</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/30">
+                  <span className="w-3 h-3 rounded-full bg-[#845EC2]" />
+                  <span className="font-semibold text-purple-900 dark:text-purple-300">Mad (2-6 Hkt)</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30">
+                  <span className="w-3 h-3 rounded-full bg-[#10B981]" />
+                  <span className="font-semibold text-emerald-900 dark:text-emerald-300">Ghunnah & Ikhfa</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-sky-50 dark:bg-sky-950/20 border border-sky-200 dark:border-sky-900/30">
+                  <span className="w-3 h-3 rounded-full bg-[#0EAAFC]" />
+                  <span className="font-semibold text-sky-900 dark:text-sky-300">Qalqalah (Pantulan)</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30">
+                  <span className="w-3 h-3 rounded-full bg-[#D97706]" />
+                  <span className="font-semibold text-amber-900 dark:text-amber-300">Iqlab & Idgham</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Verses List with Windowed Progressive Rendering */}
           <div className="space-y-4">
             {surahDetail.ayat.slice(0, visibleCount).map((verse) => {
@@ -595,6 +714,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
 
               const noteKey = `${surahDetail.nomor}-${verse.nomorAyat}`;
               const noteText = notesMap[noteKey] || '';
+              const verseTajweedTokens = tajweedMap.get(verse.nomorAyat);
 
               return (
                 <VerseCard
@@ -616,6 +736,20 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
                   onOpenNote={(ayatNum) => setNoteAyat(ayatNum)}
                   noteText={noteText}
                   isPlaying={isCurrentlyPlaying}
+                  tajweedTokens={verseTajweedTokens}
+                  showTajweedColors={showTajweedColors}
+                  onSelectTajweedRule={(rule, tokenText) => {
+                    setSelectedTajweedRule(rule);
+                    setSelectedTajweedTokenText(tokenText);
+                    setSelectedTajweedAyatNomor(verse.nomorAyat);
+                    setIsTajweedModalOpen(true);
+                  }}
+                  onOpenTajweedSheet={(ayatNum) => {
+                    setSelectedTajweedRule(null);
+                    setSelectedTajweedTokenText('');
+                    setSelectedTajweedAyatNomor(ayatNum);
+                    setIsTajweedModalOpen(true);
+                  }}
                 />
               );
             })}
@@ -707,6 +841,21 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({
             }));
             toast.show(text ? 'Catatan ayat berhasil disimpan' : 'Catatan dihapus');
           }}
+        />
+      )}
+
+      {/* Tajweed Explanation & Verse Detail Modal */}
+      {surahDetail && (
+        <TajweedModal
+          isOpen={isTajweedModalOpen}
+          onClose={() => setIsTajweedModalOpen(false)}
+          selectedRule={selectedTajweedRule}
+          selectedTokenText={selectedTajweedTokenText}
+          ayatNomor={selectedTajweedAyatNomor}
+          surahNamaLatin={surahDetail.namaLatin}
+          verse={surahDetail.ayat.find((a) => a.nomorAyat === selectedTajweedAyatNomor)}
+          tokens={tajweedMap.get(selectedTajweedAyatNomor)}
+          onOpenEducationCenter={onOpenTajweedEdu}
         />
       )}
     </div>
