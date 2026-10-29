@@ -18,6 +18,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { MosqueSilhouette } from '../components/common/IslamicOrnaments';
+import { InstitutionalPartnersLogos } from '../components/common/InstitutionalPartnersLogos';
 import { PWAInstallButton } from '../components/common/PWAInstallButton';
 import { toast } from '../components/common/Toast';
 import { ALL_QARI, INDONESIAN_QARI, INTERNATIONAL_QARI } from '../config/appConfig';
@@ -342,13 +343,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </section>
 
-      {/* 7. Local Data Management */}
-      <section className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 shadow-xs space-y-4">
+      {/* 7. Institutional Partner Logos */}
+      <InstitutionalPartnersLogos />
+
+      {/* 8. Local Data Management */}
+      <section className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 shadow-xs space-y-5">
         <h3 className="text-sm font-bold text-[var(--text-main)]">
-          Pengelolaan Data Lokal
+          Pengelolaan Data Lokal &amp; Bantuan
         </h3>
         <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Seluruh riwayat, bookmark, dan catatan disimpan di memori perangkat lokal Anda.
+          Seluruh riwayat, bookmark, dan catatan disimpan di memori perangkat lokal Anda secara pribadi dan aman.
         </p>
 
         {!showResetConfirm ? (

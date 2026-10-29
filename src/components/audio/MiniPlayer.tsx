@@ -9,6 +9,7 @@ import {
   RotateCcw,
   SkipBack,
   SkipForward,
+  Users,
   Volume2,
   X,
 } from 'lucide-react';
@@ -21,7 +22,7 @@ interface MiniPlayerProps {
 
 export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
   const [audioState, setAudioState] = useState<AudioState>(audioService.state);
-  const [showQariDropdown, setShowQariDropdown] = useState(false);
+  const [showQariDropdown, setShowQariDropdown] = useState<'qari' | 'volume' | false>(false);
   const [showSpeedDropdown, setShowSpeedDropdown] = useState(false);
   const [activeQariTab, setActiveQariTab] = useState<'all' | 'idn' | 'intl'>('all');
 
@@ -191,16 +192,78 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
               )}
             </div>
 
+            {/* Master Volume Control Trigger */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowQariDropdown(showQariDropdown === 'volume' ? false : 'volume');
+                  setShowSpeedDropdown(false);
+                }}
+                className={`p-1.5 transition-colors cursor-pointer active:scale-95 ${
+                  audioState.volume > 0 ? 'text-[#0EAAFC]' : 'text-slate-400'
+                }`}
+                title="Pengaturan Volume Audio Murottal"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+
+              {showQariDropdown === 'volume' && (
+                <div className="absolute right-0 bottom-full mb-2 bg-[var(--bg-card)] border border-[var(--border-main)] rounded-2xl shadow-xl p-3 w-64 z-50 backdrop-blur-md space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[var(--text-main)] flex items-center gap-1.5">
+                      <Volume2 className="w-3.5 h-3.5 text-[#0EAAFC]" />
+                      Master Volume Audio
+                    </span>
+                    <span className="text-xs font-mono font-bold text-[#0EAAFC]">
+                      {Math.round(audioState.volume * 100)}%
+                    </span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={audioState.volume}
+                    onChange={(e) => audioService.setVolume(parseFloat(e.target.value))}
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#0EAAFC]"
+                  />
+
+                  {/* Volume Booster (+6.8dB Gain Boost Badge) */}
+                  <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-bold text-[var(--text-main)] block">
+                        Volume Booster (+6.8dB)
+                      </span>
+                      <span className="text-[9px] text-[var(--text-muted)] block">
+                        Penguat Web Audio API tanpa distorsi
+                      </span>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={audioState.isBoosted}
+                        onChange={(e) => audioService.setBoosted(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#43B433]"></div>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Qari Selector Dropdown Trigger */}
             <button
               onClick={() => {
-                setShowQariDropdown(!showQariDropdown);
+                setShowQariDropdown(showQariDropdown === 'qari' ? false : 'qari');
                 setShowSpeedDropdown(false);
               }}
               className="p-1.5 text-slate-500 hover:text-[#0EAAFC] transition-colors cursor-pointer active:scale-95"
               title="Ganti Qari Murottal"
             >
-              <Volume2 className="w-4 h-4" />
+              <Users className="w-4 h-4" />
             </button>
 
             {/* Close / Stop */}
@@ -226,7 +289,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onOpenSurah }) => {
         )}
 
         {/* Qari Selection Panel */}
-        {showQariDropdown && (
+        {showQariDropdown === 'qari' && (
           <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] space-y-2 animate-in fade-in duration-100">
             {/* Filter Tabs */}
             <div className="flex items-center justify-between pb-1">

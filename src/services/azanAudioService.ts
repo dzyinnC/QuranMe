@@ -2,9 +2,10 @@
  * QuranMe Azan & Prayer Sound Library Engine
  * - Verified authentic Adhan recordings (Indonesian & International)
  * - Strict separation between Real Adhan and Notification Chimes
+ * - Web Audio API Gain Booster (+6.8dB) with Dynamic Compression to eliminate quiet sound issues
+ * - Persistent Volume calibration saved across sessions
  * - Transparent error reporting ("Audio azan belum tersedia / gagal dimuat")
  * - 100% offline fallback chime via Web Audio API (explicitly labeled as non-Azan)
- * - Volume, playback tracking, and test audio controls
  */
 
 export interface AzanAudioOption {
@@ -77,6 +78,7 @@ export const AZAN_AUDIO_OPTIONS: AzanAudioOption[] = [
 
 const PREF_AZAN_AUDIO_KEY = 'quranme_selected_azan_audio_v2';
 const PREF_PRAYER_NOTIF_SETTINGS = 'quranme_prayer_notif_settings_v2';
+const PREF_AZAN_VOLUME_KEY = 'quranme_azan_volume_v2';
 
 export interface PrayerNotifSetting {
   prayerId: 'subuh' | 'dzuhur' | 'ashar' | 'maghrib' | 'isya';
@@ -91,6 +93,7 @@ export interface AzanPlayerState {
   currentTime: number;
   duration: number;
   volume: number;
+  isBoosted: boolean;
   errorMessage: string | null;
 }
 
@@ -101,9 +104,17 @@ class AzanAudioService {
   private isLoading: boolean = false;
   private currentTime: number = 0;
   private duration: number = 0;
-  private volume: number = 0.85;
+  private volume: number = this.loadSavedVolume();
+  private isBoosted: boolean = true;
   private errorMessage: string | null = null;
+
+  // Web Audio API Pipeline nodes
   private audioCtx: AudioContext | null = null;
+  private gainNode: GainNode | null = null;
+  private compressorNode: DynamicsCompressorNode | null = null;
+  private sourceNode: MediaElementAudioSourceNode | null = null;
+  private isWebAudioConnected: boolean = false;
+
   private listeners: Set<(state: AzanPlayerState) => void> = new Set();
   private chimeTimeoutId: any = null;
 
@@ -113,10 +124,22 @@ class AzanAudioService {
     }
   }
 
+  private loadSavedVolume(): number {
+    try {
+      const saved = localStorage.getItem(PREF_AZAN_VOLUME_KEY);
+      if (saved !== null) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return parsed;
+      }
+    } catch {}
+    return 1.0; // Default 100% full volume
+  }
+
   private initAudioElement() {
+    if (this.audio) return;
     this.audio = new Audio();
     this.audio.preload = 'metadata';
-    this.audio.volume = this.volume;
+    this.audio.crossOrigin = 'anonymous'; // Enable CORS for Web Audio API node connection
 
     this.audio.addEventListener('loadstart', () => {
       this.isLoading = true;
@@ -133,6 +156,7 @@ class AzanAudioService {
       this.isPlaying = true;
       this.isLoading = false;
       this.errorMessage = null;
+      this.resumeWebAudio();
       this.notify();
     });
 
@@ -159,10 +183,69 @@ class AzanAudioService {
     this.audio.addEventListener('error', () => {
       this.isLoading = false;
       this.isPlaying = false;
-      // Do NOT silently play chime. Report genuine error as requested!
       this.errorMessage = 'Audio azan gagal dimuat. Periksa izin pemutaran audio di peramban atau gunakan sumber audio lain.';
       this.notify();
     });
+
+    this.applyVolumeGain();
+  }
+
+  private setupWebAudioPipeline() {
+    if (this.isWebAudioConnected || !this.audio) return;
+
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      if (!this.audioCtx) {
+        this.audioCtx = new AudioCtx();
+      }
+
+      if (!this.gainNode) {
+        this.gainNode = this.audioCtx.createGain();
+      }
+
+      if (!this.compressorNode) {
+        this.compressorNode = this.audioCtx.createDynamicsCompressor();
+        this.compressorNode.threshold.setValueAtTime(-12, this.audioCtx.currentTime);
+        this.compressorNode.knee.setValueAtTime(10, this.audioCtx.currentTime);
+        this.compressorNode.ratio.setValueAtTime(6, this.audioCtx.currentTime);
+        this.compressorNode.attack.setValueAtTime(0.003, this.audioCtx.currentTime);
+        this.compressorNode.release.setValueAtTime(0.25, this.audioCtx.currentTime);
+      }
+
+      if (!this.sourceNode && this.audio) {
+        this.sourceNode = this.audioCtx.createMediaElementSource(this.audio);
+        this.sourceNode.connect(this.gainNode);
+        this.gainNode.connect(this.compressorNode);
+        this.compressorNode.connect(this.audioCtx.destination);
+        this.isWebAudioConnected = true;
+      }
+    } catch (e) {
+      console.warn('Azan Web Audio API fallback to HTML5 Audio:', e);
+      this.isWebAudioConnected = false;
+    }
+  }
+
+  private resumeWebAudio() {
+    this.setupWebAudioPipeline();
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume().catch(() => {});
+    }
+    this.applyVolumeGain();
+  }
+
+  private applyVolumeGain() {
+    const v = Math.max(0, Math.min(1, this.volume));
+    const maxMultiplier = this.isBoosted ? 2.2 : 1.0;
+    const targetGain = v === 0 ? 0 : Math.pow(v, 1.4) * maxMultiplier;
+
+    if (this.isWebAudioConnected && this.gainNode && this.audioCtx) {
+      this.gainNode.gain.setTargetAtTime(targetGain, this.audioCtx.currentTime, 0.05);
+      if (this.audio) this.audio.volume = 1.0;
+    } else if (this.audio) {
+      this.audio.volume = Math.min(1, v);
+    }
   }
 
   private getState(): AzanPlayerState {
@@ -173,6 +256,7 @@ class AzanAudioService {
       currentTime: this.currentTime,
       duration: this.duration,
       volume: this.volume,
+      isBoosted: this.isBoosted,
       errorMessage: this.errorMessage,
     };
   }
@@ -239,9 +323,10 @@ class AzanAudioService {
 
   public setVolume(vol: number) {
     this.volume = Math.max(0, Math.min(1, vol));
-    if (this.audio) {
-      this.audio.volume = this.volume;
-    }
+    try {
+      localStorage.setItem(PREF_AZAN_VOLUME_KEY, this.volume.toString());
+    } catch {}
+    this.applyVolumeGain();
     this.notify();
   }
 
@@ -267,6 +352,7 @@ class AzanAudioService {
     if (this.isPlaying) {
       this.audio.pause();
     } else {
+      this.resumeWebAudio();
       this.audio.play().catch((err) => {
         this.errorMessage = `Gagal memutar audio: ${err.message || 'Izin audio diperlukan'}`;
         this.isPlaying = false;
@@ -279,7 +365,6 @@ class AzanAudioService {
    * Preview or test a selected audio option
    */
   public playPreview(option: AzanAudioOption) {
-    // If clicking same active audio, toggle play/pause
     if (this.currentPlayingId === option.id && this.isPlaying) {
       this.stop();
       return;
@@ -326,8 +411,8 @@ class AzanAudioService {
     if (this.audio && option.audioUrl) {
       this.isLoading = true;
       this.audio.src = option.audioUrl;
-      this.audio.volume = this.volume;
       this.audio.currentTime = 0;
+      this.resumeWebAudio();
       this.notify();
 
       const playPromise = this.audio.play();
@@ -340,7 +425,6 @@ class AzanAudioService {
           })
           .catch((err) => {
             console.warn('Primary audio URL play error:', err);
-            // Attempt fallback URL if present
             if (option.fallbackUrl && this.audio) {
               this.audio.src = option.fallbackUrl;
               this.audio
@@ -354,7 +438,6 @@ class AzanAudioService {
                   console.error('Fallback audio play error:', fallbackErr);
                   this.isLoading = false;
                   this.isPlaying = false;
-                  // As required by Bagian A: NEVER silently fallback to chime! Report genuine status.
                   this.errorMessage = `Audio azan "${option.name}" belum dapat diputar otomatis oleh peramban. Klik tombol untuk mengizinkan audio atau coba rekaman lain.`;
                   this.notify();
                 });
@@ -374,7 +457,6 @@ class AzanAudioService {
 
   /**
    * Synthesize clean soft bell chime with Web Audio API (Offline & lightweight)
-   * Clearly identified as short notification, NOT azan
    */
   private playSoftChime() {
     try {
@@ -395,7 +477,7 @@ class AzanAudioService {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, this.audioCtx!.currentTime + idx * 0.35);
 
-        const noteVol = 0.22 * this.volume;
+        const noteVol = 0.25 * (this.isBoosted ? 1.8 : 1.0) * this.volume;
         gain.gain.setValueAtTime(0, this.audioCtx!.currentTime + idx * 0.35);
         gain.gain.linearRampToValueAtTime(noteVol, this.audioCtx!.currentTime + idx * 0.35 + 0.05);
         gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx!.currentTime + idx * 0.35 + 1.5);

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { AuthModal } from '../components/auth/AuthModal';
 import { MosqueSilhouette } from '../components/common/IslamicOrnaments';
+import { InstitutionalPartnersLogos } from '../components/common/InstitutionalPartnersLogos';
 import { toast } from '../components/common/Toast';
 import { PageId } from '../components/layout/Header';
 import { authService, UserProfile } from '../services/authService';
@@ -458,10 +459,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         </div>
       </section>
 
-      {/* 6. Section: Pengelolaan Data Lokal */}
-      <section className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 shadow-xs space-y-4">
+      {/* 6. Section: Didukung oleh (Mitra Logos) - Tepat di atas Pengelolaan Data Lokal & Bantuan */}
+      <InstitutionalPartnersLogos />
+
+      {/* 7. Section: Pengelolaan Data Lokal & Bantuan */}
+      <section className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 shadow-xs space-y-5">
         <h3 className="text-sm font-bold text-[var(--text-main)]">
-          Pengelolaan Data Lokal & Bantuan
+          Pengelolaan Data Lokal &amp; Bantuan
         </h3>
         <p className="text-xs text-[var(--text-muted)] leading-relaxed">
           Seluruh data pembacaan tersimpan aman di peramban Anda. Anda dapat mereset data kapan saja.
@@ -506,9 +510,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
         <div className="pt-3 border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] space-y-1">
           <p>
-            <strong>QuranMe v3.3</strong> · Sumber data Al-Qur'an: EQuran.id API v2 & Kemenag RI
+            <strong>QuranMe v3.3</strong> · Sumber data Al-Qur'an: EQuran.id API v2 &amp; Kemenag RI
           </p>
-          <p>Kalkulasi Jadwal Salat & Kalender: Metode Astronomis MABIMS Kemenag RI</p>
+          <p>Kalkulasi Jadwal Salat &amp; Kalender: Metode Astronomis MABIMS Kemenag RI</p>
         </div>
       </section>
 

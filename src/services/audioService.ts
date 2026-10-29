@@ -23,6 +23,8 @@ export interface AudioState {
   duration: number;
   playbackRate: number;
   playMode: AudioPlayMode;
+  volume: number; // 0.0 to 1.0
+  isBoosted: boolean; // True for Web Audio API +6.8dB Gain Boost & Compressor
   error: string | null;
   lastPlayed: LastPlayedAudioInfo | null;
 }
@@ -30,12 +32,21 @@ export interface AudioState {
 type AudioListener = (state: AudioState) => void;
 
 const LAST_AUDIO_KEY = 'quranme_last_played_audio_v1';
+const VOLUME_PREF_KEY = 'quranme_murottal_volume_v2';
+const BOOST_PREF_KEY = 'quranme_murottal_boost_v2';
 
 class AudioPlayerManager {
   private audio: HTMLAudioElement | null = null;
   private listeners: Set<AudioListener> = new Set();
   private playlist: AyatItem[] = [];
   private currentPlaylistIndex: number = -1;
+
+  // Web Audio API Gain Booster & Dynamic Compressor nodes
+  private audioCtx: AudioContext | null = null;
+  private gainNode: GainNode | null = null;
+  private compressorNode: DynamicsCompressorNode | null = null;
+  private sourceNode: MediaElementAudioSourceNode | null = null;
+  private isWebAudioConnected: boolean = false;
 
   public state: AudioState = {
     isPlaying: false,
@@ -48,6 +59,8 @@ class AudioPlayerManager {
     duration: 0,
     playbackRate: 1.0,
     playMode: 'verse',
+    volume: this.loadSavedVolume(),
+    isBoosted: this.loadSavedBoostState(),
     error: null,
     lastPlayed: this.loadLastPlayed(),
   };
@@ -56,6 +69,25 @@ class AudioPlayerManager {
     if (typeof window !== 'undefined') {
       this.initAudio();
     }
+  }
+
+  private loadSavedVolume(): number {
+    try {
+      const saved = localStorage.getItem(VOLUME_PREF_KEY);
+      if (saved !== null) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return parsed;
+      }
+    } catch {}
+    return 1.0; // Default 100% full volume
+  }
+
+  private loadSavedBoostState(): boolean {
+    try {
+      const saved = localStorage.getItem(BOOST_PREF_KEY);
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true; // Default enabled volume booster (+6.8dB)
   }
 
   private loadLastPlayed(): LastPlayedAudioInfo | null {
@@ -80,11 +112,13 @@ class AudioPlayerManager {
     if (this.audio) return;
     this.audio = new Audio();
     this.audio.preload = 'metadata';
+    this.audio.crossOrigin = 'anonymous'; // Enable CORS for Web Audio API node connection
 
     this.audio.addEventListener('play', () => {
       this.state.isPlaying = true;
       this.state.isLoading = false;
       this.state.error = null;
+      this.resumeWebAudio();
       this.notify();
     });
 
@@ -121,6 +155,97 @@ class AudioPlayerManager {
       this.state.error = 'Audio tidak dapat dimuat. Silakan periksa koneksi atau coba Qari lain.';
       this.notify();
     });
+
+    // Apply volume calibration
+    this.applyVolumeGain();
+  }
+
+  /**
+   * Connect HTML5 Audio element to Web Audio API for gain boosting (+6.8dB at 100%)
+   * coupled with a dynamic compressor to ensure non-clipping, crystal-clear audio output.
+   */
+  private setupWebAudioPipeline() {
+    if (this.isWebAudioConnected || !this.audio) return;
+
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      if (!this.audioCtx) {
+        this.audioCtx = new AudioCtx();
+      }
+
+      if (!this.gainNode) {
+        this.gainNode = this.audioCtx.createGain();
+      }
+
+      if (!this.compressorNode) {
+        this.compressorNode = this.audioCtx.createDynamicsCompressor();
+        // Transparent limiter configuration to prevent clipping
+        this.compressorNode.threshold.setValueAtTime(-12, this.audioCtx.currentTime);
+        this.compressorNode.knee.setValueAtTime(10, this.audioCtx.currentTime);
+        this.compressorNode.ratio.setValueAtTime(6, this.audioCtx.currentTime);
+        this.compressorNode.attack.setValueAtTime(0.003, this.audioCtx.currentTime);
+        this.compressorNode.release.setValueAtTime(0.25, this.audioCtx.currentTime);
+      }
+
+      if (!this.sourceNode && this.audio) {
+        this.sourceNode = this.audioCtx.createMediaElementSource(this.audio);
+        this.sourceNode.connect(this.gainNode);
+        this.gainNode.connect(this.compressorNode);
+        this.compressorNode.connect(this.audioCtx.destination);
+        this.isWebAudioConnected = true;
+      }
+    } catch (e) {
+      console.warn('Web Audio API gain boost pipeline fallback to standard HTML5 audio:', e);
+      this.isWebAudioConnected = false;
+    }
+  }
+
+  private resumeWebAudio() {
+    this.setupWebAudioPipeline();
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume().catch(() => {});
+    }
+    this.applyVolumeGain();
+  }
+
+  private applyVolumeGain() {
+    const v = Math.max(0, Math.min(1, this.state.volume));
+
+    // Calculate gain multiplier:
+    // If v === 0 -> 0 gain (silent)
+    // If boosted is active, max gain is 2.2x (+6.8 dB gain boost)
+    // Formula: v * v * 2.2 gives natural logarithmic acoustic curve
+    const maxMultiplier = this.state.isBoosted ? 2.2 : 1.0;
+    const targetGain = v === 0 ? 0 : Math.pow(v, 1.4) * maxMultiplier;
+
+    if (this.isWebAudioConnected && this.gainNode && this.audioCtx) {
+      this.gainNode.gain.setTargetAtTime(targetGain, this.audioCtx.currentTime, 0.05);
+      // Fallback HTML audio volume set to 1.0 max
+      if (this.audio) this.audio.volume = 1.0;
+    } else if (this.audio) {
+      this.audio.volume = Math.min(1, v);
+    }
+  }
+
+  public setVolume(vol: number) {
+    const clamped = Math.max(0, Math.min(1, vol));
+    this.state.volume = clamped;
+    try {
+      localStorage.setItem(VOLUME_PREF_KEY, clamped.toString());
+    } catch {}
+    this.applyVolumeGain();
+    this.notify();
+  }
+
+  public setBoosted(boosted: boolean) {
+    this.state.isBoosted = boosted;
+    try {
+      localStorage.setItem(BOOST_PREF_KEY, boosted.toString());
+    } catch {}
+    this.applyVolumeGain();
+    this.notify();
   }
 
   private notify() {
@@ -169,13 +294,10 @@ class AudioPlayerManager {
     this.playlist = playlist;
     this.currentPlaylistIndex = playlist.findIndex((v) => v.nomorAyat === verse.nomorAyat);
 
-    // Cek apakah qari saat ini adalah qari Indonesia (yang sebagian besar adalah full-surah murottal)
     const qari = this.getQariSource();
     let url: string | null = null;
 
     if (qari?.isIndonesian) {
-      // Qari Indonesia umumnya menyediakan full-surah, tapi jika dipanggil dari ayat, kita beri opsi
-      // fallback ke audio ayat resmi equran.id (Misyari '05' atau '01')
       url = verse.audio['05'] || verse.audio['01'] || Object.values(verse.audio)[0];
     } else {
       const qariKey = this.state.currentQari;
@@ -204,6 +326,7 @@ class AudioPlayerManager {
     });
     this.notify();
 
+    this.resumeWebAudio();
     this.audio.src = url;
     this.audio.playbackRate = this.state.playbackRate;
     this.audio.load();
@@ -238,10 +361,8 @@ class AudioPlayerManager {
     if (qari?.isIndonesian && qari.getSurahAudioUrl) {
       url = qari.getSurahAudioUrl(surahNomor);
       if (!url) {
-        // Tampilkan pesan informatif jika surah belum ada di katalog qari ini
         this.state.error = `${qari.name} belum memiliki rekaman untuk Surat ${surahNamaLatin}. Mencoba memutar dengan Qari Misyari Rasyid...`;
         this.notify();
-        // Fallback anggun ke Misyari
         if (audioFullFallback) {
           url = audioFullFallback['05'] || Object.values(audioFullFallback)[0];
         }
@@ -275,6 +396,7 @@ class AudioPlayerManager {
     });
     this.notify();
 
+    this.resumeWebAudio();
     this.audio.src = url;
     this.audio.playbackRate = this.state.playbackRate;
     this.audio.load();
@@ -292,6 +414,7 @@ class AudioPlayerManager {
     if (this.state.isPlaying) {
       this.audio.pause();
     } else {
+      this.resumeWebAudio();
       this.audio.play().catch((err) => {
         console.warn('Audio play error:', err);
       });

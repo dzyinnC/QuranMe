@@ -67,6 +67,7 @@ export const IbadahPage: React.FC<IbadahPageProps> = () => {
     currentTime: 0,
     duration: 0,
     volume: 0.85,
+    isBoosted: true,
     errorMessage: null,
   });
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
